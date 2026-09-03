@@ -25,7 +25,8 @@ input[type="date"]{
     padding:11px 12px;
   }
 }
-/* 底部Tab切换 */
+
+/* 底部Tab切换【已修复点击跳动】 */
 .tab-bar{
   position:fixed;
   bottom:0;
@@ -47,9 +48,7 @@ input[type="date"]{
   font-size:14.5px;
   font-weight:500;
   cursor:pointer;
-  /* 只过渡背景、文字颜色，禁止过渡阴影、transform、宽高 */
   transition: background-color 0.25s, color 0.25s;
-  /* 关闭移动端点击高亮、禁止选中文字 */
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
@@ -62,17 +61,13 @@ input[type="date"]{
   color:#ffffff;
   box-shadow:none !important;
 }
-/* 删掉所有 :active transform位移，tab点击完全不动 */
 .tab:active{
   transform:none !important;
 }
-/* 电脑端hover效果，手机触摸不会触发 */
 .tab:hover.tab-active{
   background:#2563eb;
 }
 
-
-  
 /* 视图容器，默认隐藏 */
 .view{display:none;}
 .view.show{display:block;}
@@ -91,15 +86,29 @@ label{display:block;margin-bottom:8px;font-size:15px;color:#475569;font-weight:5
 input,select{width:100%;padding:13px 16px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;background:#fbfcfe;transition:0.2s;}
 input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.15);}
 
-button{padding:12px 18px;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:500;margin:4px;transition:0.2s;}
-button:hover{transform:translateY(-1px);}
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  margin:3px;
+  transition:0.15s ease;
+}
+button:hover{
+  opacity:0.92;
+}
+button:active{
+  transform:none !important;
+}
 .btn-primary{background:#3b82f6;color:#fff;}
 .btn-warn{background:#ef4444;color:#fff;}
 .btn-gray{background:#64748b;color:#fff;}
 .btn-success{background:#10b981;color:#fff;}
 .btn-danger{background:#b91c1c;color:#fff;}
 .btn-undo{background:#f59e0b;color:#fff;}
-.btn-export{background:#8b5cf6;color:#fff;width:100%;margin-top:8px;}
+.btn-export{background:#8b5cf6;color:#fff;width:100%;margin-top:8px;padding:12px 18px;font-size:15px;}
 
 /* 任务卡片 */
 .task-card{background:#ffffff;padding:20px;border-radius:14px;margin-bottom:14px;box-shadow:0 3px 12px rgba(0,0,0,0.06);}
@@ -108,7 +117,7 @@ button:hover{transform:translateY(-1px);}
 .tag-expire{display:inline-block;font-size:13px;padding:2px 8px;border-radius:6px;background:#fee2e2;color:#dc2626;}
 .tag-repeat{display:inline-block;font-size:13px;padding:2px 8px;border-radius:6px;background:#dbeafe;color:#1d4ed8;}
 .time-text{font-size:15px;color:#64748b;margin:10px 0;}
-.btn-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.btn-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
 
 .empty{text-align:center;color:#94a3b8;margin:60px 0;font-size:16px;}
 .section-title{font-size:18px;font-weight:600;margin:36px 0 12px 0;color:#334155;cursor:pointer;user-select:none;}
@@ -333,14 +342,14 @@ function switchView(mode){
 
   if(mode==="input"){
     vInput.classList.add("show");
-    tInput.className="tab-active";
+    tInput.className="tab tab-active";
   }else if(mode==="list"){
     vList.classList.add("show");
-    tList.className="tab-active";
+    tList.className="tab tab-active";
     renderTasks();
   }else if(mode==="export"){
     vExport.classList.add("show");
-    tExport.className="tab-active";
+    tExport.className="tab tab-active";
   }
 }
 
