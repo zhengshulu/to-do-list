@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>任务计时打卡</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+body{padding:24px;max-width:720px;margin:0 auto;background:#f0f4f9;color:#2d3748;padding-bottom:90px;}
+
+/* 底部Tab切换 */
+.tab-bar{position:fixed;bottom:0;left:0;right:0;max-width:720px;margin:0 auto;background:#ffffff;display:flex;gap:8px;padding:12px 16px;box-shadow:0 -2px 12px rgba(0,0,0,0.08);}
+.tab{flex:1;text-align:center;padding:12px 0;border-radius:12px;font-size:14.5px;font-weight:500;cursor:pointer;transition:0.25s;}
+.tab-inactive{background:#e2e8f0;color:#64748b;}
+.tab-active{background:#3b82f6;color:#ffffff;box-shadow:0 4px 12px rgba(59,130,246,0.25);}
+
+/* 视图容器，默认隐藏 */
+.view{display:none;}
+.view.show{display:block;}
+
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.header h2{font-size:22px;font-weight:600;color:#1e293b;}
+.score{font-size:17px;color:#dc2626;font-weight:600;}
+
+.export-card{background:#ffffff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.07);}
+.export-row{margin-bottom:18px;}
+
+/* 表单卡片 */
+.form-card{background:#ffffff;padding:28px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.07);}
+.item-row{margin-bottom:22px;}
+label{display:block;margin-bottom:8px;font-size:15px;color:#475569;font-weight:500;}
+input,select{width:100%;padding:13px 16px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;background:#fbfcfe;transition:0.2s;}
+input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.15);}
+
+button{padding:12px 18px;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:500;margin:4px;transition:0.2s;}
+button:hover{transform:translateY(-1px);}
+.btn-primary{background:#3b82f6;color:#fff;}
+.btn-warn{background:#ef4444;color:#fff;}
+.btn-gray{background:#64748b;color:#fff;}
+.btn-success{background:#10b981;color:#fff;}
+.btn-danger{background:#b91c1c;color:#fff;}
+.btn-undo{background:#f59e0b;color:#fff;}
+.btn-export{background:#8b5cf6;color:#fff;width:100%;margin-top:8px;}
+
+/* 任务卡片 */
+.task-card{background:#ffffff;padding:20px;border-radius:14px;margin-bottom:14px;box-shadow:0 3px 12px rgba(0,0,0,0.06);}
+.task-name{font-size:17px;margin-bottom:8px;font-weight:500;display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+.tag-finish{display:inline-block;font-size:13px;padding:2px 8px;border-radius:6px;background:#dcfce7;color:#059669;}
+.tag-expire{display:inline-block;font-size:13px;padding:2px 8px;border-radius:6px;background:#fee2e2;color:#dc2626;}
+.tag-repeat{display:inline-block;font-size:13px;padding:2px 8px;border-radius:6px;background:#dbeafe;color:#1d4ed8;}
+.time-text{font-size:15px;color:#64748b;margin:10px 0;}
+.btn-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+
+.empty{text-align:center;color:#94a3b8;margin:60px 0;font-size:16px;}
+.section-title{font-size:18px;font-weight:600;margin:36px 0 12px 0;color:#334155;cursor:pointer;user-select:none;}
+.section-title::after{content:" ▾";font-size:12px;opacity:0.6;}
+.section-title.collapsed::after{content:" ▸";}
+
+/* 可点击学科分组标题，带动画 */
+.group-title{font-size:16px;font-weight:600;margin:24px 0 8px 0;color:#475569;padding:6px 10px;border-left:4px solid #3b82f6;
+cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:none;}
+.group-title:hover{background:#e8f0fe;padding-left:14px;}
+.group-title::after{content:" ▾";font-size:12px;opacity:0.6;}
+.group-title.collapsed::after{content:" ▸";}
+
+/* 分组容器，折叠动画 */
+.group-wrap{overflow:hidden;transition:max-height 0.35s ease;}
+.group-wrap.collapsed{max-height:0 !important;}
+.section-wrap{overflow:hidden;transition:max-height 0.35s ease;}
+.section-wrap.collapsed{max-height:0 !important;}
+
+.hidden-row{display:none;}
+</style>
+</head>
+<body>
+<div class="tab-bar">
+  <div id="tabInput" class="tab tab-inactive" onclick="switchView('input')">📝 任务录入</div>
+  <div id="tabList" class="tab tab-active" onclick="switchView('list')">📋 任务清单</div>
+  <div id="tabExport" class="tab tab-inactive" onclick="switchView('export')">💾数据导出</div>
+</div>
+
+<!-- 录入视图 -->
+<div id="viewInput" class="view">
+  <div class="form-card">
+    <div class="item-row">
+      <label>学科（选填）</label>
+      <select id="taskSubject">
+        <option value="">不选择学科</option>
+        <option value="语文">语文</option>
+        <option value="数学">数学</option>
+        <option value="英语">英语</option>
+        <option value="科学">科学</option>
+        <option value="道法">道法</option>
+        <option value="历史">历史</option>
+        <option value="地理">地理</option>
+        <option value="体育">体育</option>
+        <option value="艺术">艺术</option>
+      </select>
+    </div>
+    <div class="item-row">
+      <label>重复模式</label>
+      <select id="repeatMode" onchange="toggleRepeatInput()">
+        <option value="none">不重复（单次任务）</option>
+        <option value="daily">每天重复</option>
+      </select>
+    </div>
+    <div id="repeatRangeRow" class="hidden-row">
+      <div class="item-row">
+        <label>周期‑开始日期</label>
+        <input id="repeatStart" type="date">
+      </div>
+      <div class="item-row">
+        <label>周期‑结束日期</label>
+        <input id="repeatEnd" type="date">
+      </div>
+    </div>
+    <div class="item-row" id="singleDateRow">
+      <label>计划执行日期</label>
+      <input id="taskDate" type="date">
+    </div>
+    <div class="item-row">
+      <label>任务名称</label>
+      <input id="taskName" placeholder="请输入要完成的任务">
+    </div>
+    <button class="btn-primary" onclick="addTask()">保存任务</button>
+  </div>
+</div>
+
+<!-- 清单视图，默认show -->
+<div id="viewList" class="view show">
+  <div class="header">
+    <h2>任务清单</h2>
+    <div class="score">总积分：<span id="scoreText">0</span></div>
+  </div>
+
+  <div class="item-row">
+    <label>选择查看日期</label>
+    <input id="selectDate" type="date" onchange="renderTasks()">
+  </div>
+
+  <div id="taskListWrap"></div>
+
+  <div id="finishedSection">
+    <div class="section-title" id="finishedTitle" onclick="toggleFinishedSection()">✅今日已完成</div>
+    <div id="finishedWrap" class="section-wrap"></div>
+  </div>
+
+  <div class="section-title">⏰ 过期未完成任务</div>
+  <div id="expireWrap" class="section-wrap"></div>
+</div>
+
+<!-- 导出独立页面 -->
+<div id="viewExport" class="view">
+  <div class="header">
+    <h2>💾数据导出</h2>
+  </div>
+  <div class="export-card">
+    <div class="export-row">
+      <label>导出开始日期</label>
+      <input id="exportStartDate" type="date">
+    </div>
+    <div class="export-row">
+      <label>导出结束日期</label>
+      <input id="exportEndDate" type="date">
+    </div>
+    <div style="font-size:13px;color:#666;margin-bottom:12px;">
+      导出时间段内任务成果报告（txt）+原始备份（json），用于复盘学习成果
+    </div>
+    <button class="btn-export" onclick="exportTaskRange()">导出成果文件</button>
+  </div>
+</div>
+
+<script>
+if(!localStorage.getItem("taskList")) localStorage.setItem("taskList",JSON.stringify([]));
+if(!localStorage.getItem("score")) localStorage.setItem("score","0");
+if(!localStorage.getItem("groupCollapseState")) localStorage.setItem("groupCollapseState",JSON.stringify({}));
+if(!localStorage.getItem("uiState")) localStorage.setItem("uiState",JSON.stringify({finishedSectionCollapsed:false}));
+
+function getTaskList(){
+  const arr=JSON.parse(localStorage.getItem("taskList"));
+  arr.forEach(t=>{
+    if(!t.dateFinishedMap) t.dateFinishedMap={};
+  });
+  return arr;
+}
+function saveTaskList(arr){localStorage.setItem("taskList",JSON.stringify(arr));}
+function getScore(){return Number(localStorage.getItem("score"));}
+function setScore(s){localStorage.setItem("score",String(s));document.getElementById("scoreText").innerText=s;}
+function getCollapseState(){return JSON.parse(localStorage.getItem("groupCollapseState"));}
+function setCollapseState(obj){localStorage.setItem("groupCollapseState",JSON.stringify(obj));}
+function getUiState(){return JSON.parse(localStorage.getItem("uiState"));}
+function setUiState(obj){localStorage.setItem("uiState",JSON.stringify(obj));}
+
+const today=new Date().toISOString().slice(0,10);
+document.getElementById("taskDate").value=today;
+document.getElementById("repeatStart").value=today;
+document.getElementById("repeatEnd").value=today;
+document.getElementById("selectDate").value=today;
+document.getElementById("exportStartDate").value=today;
+document.getElementById("exportEndDate").value=today;
+
+let realTimeTimer=null;
+
+function toggleRepeatInput(){
+  const mode=document.getElementById("repeatMode").value;
+  const rangeRow=document.getElementById("repeatRangeRow");
+  const singleRow=document.getElementById("singleDateRow");
+  if(mode==="daily"){
+    rangeRow.classList.remove("hidden-row");
+    singleRow.classList.add("hidden-row");
+  }else{
+    rangeRow.classList.add("hidden-row");
+    singleRow.classList.remove("hidden-row");
+  }
+}
+
+//切换视图：input / list / export
+function switchView(mode){
+  const vInput=document.getElementById("viewInput");
+  const vList=document.getElementById("viewList");
+  const vExport=document.getElementById("viewExport");
+  const tInput=document.getElementById("tabInput");
+  const tList=document.getElementById("tabList");
+  const tExport=document.getElementById("tabExport");
+  vInput.classList.remove("show");
+  vList.classList.remove("show");
+  vExport.classList.remove("show");
+  tInput.className="tab tab-inactive";
+  tList.className="tab tab-inactive";
+  tExport.className="tab tab-inactive";
+
+  if(mode==="input"){
+    vInput.classList.add("show");
+    tInput.className="tab tab-active";
+  }else if(mode==="list"){
+    vList.classList.add("show");
+    tList.className="tab tab-active";
+    renderTasks();
+  }else if(mode==="export"){
+    vExport.classList.add("show");
+    tExport.className="tab tab-active";
+  }
+}
+
+function toggleGroup(groupKey){
+  const state=getCollapseState();
+  state[groupKey]=!state[groupKey];
+  setCollapseState(state);
+  renderTasks();
+}
+
+function toggleFinishedSection(){
+  const ui=getUiState();
+  ui.finishedSectionCollapsed=!ui.finishedSectionCollapsed;
+  setUiState(ui);
+  renderTasks();
+}
+
+function addTask(){
+  const subject=document.getElementById("taskSubject").value;
+  const name=document.getElementById("taskName").value.trim();
+  const repeatMode=document.getElementById("repeatMode").value;
+  if(!name){alert("请填写任务名称");return;}
+  let task={
+    id:Date.now(),
+    subject:subject,
+    name:name,
+    repeatMode:repeatMode,
+    finished:false,
+    dateFinishedMap:{},
+    timing:false,
+    totalTime:0,
+    startTime:null
+  };
+  if(repeatMode==="daily"){
+    const rStart=document.getElementById("repeatStart").value;
+    const rEnd=document.getElementById("repeatEnd").value;
+    if(!rStart||!rEnd){alert("请填写周期开始与结束日期");return;}
+    task.repeatStart=rStart;
+    task.repeatEnd=rEnd;
+    task.date=null;
+  }else{
+    const date=document.getElementById("taskDate").value;
+    if(!date){alert("请填写计划执行日期");return;}
+    task.date=date;
+    task.repeatStart=null;
+    task.repeatEnd=null;
+  }
+  const list=getTaskList();
+  list.push(task);
+  saveTaskList(list);
+  document.getElementById("taskName").value="";
+  document.getElementById("taskSubject").value="";
+  document.getElementById("repeatMode").value="none";
+  toggleRepeatInput();
+  alert("任务添加成功！");
+  switchView("list");
+}
+
+function deleteTask(id){
+  if(!confirm("确定要删除这条任务吗？")) return;
+  let list=getTaskList();
+  list=list.filter(item=>item.id!==id);
+  saveTaskList(list);
+  renderTasks();
+}
+
+function formatSec(sec){
+  let h=Math.floor(sec/3600);
+  let m=Math.floor((sec%3600)/60);
+  let s=sec%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function getDisplayTime(task){
+  if(!task.timing) return task.totalTime;
+  const diff=Math.round((Date.now()-task.startTime)/1000);
+  return task.totalTime + diff;
+}
+
+function isInRange(checkDate,start,end){
+  return checkDate >= start && checkDate <= end;
+}
+
+function isTaskFinishedOnDate(task,selDate){
+  if(task.repeatMode==="daily"){
+    return !!task.dateFinishedMap[selDate];
+  }else{
+    return task.finished;
+  }
+}
+
+function setTaskFinishedOnDate(task,selDate,flag){
+  if(task.repeatMode==="daily"){
+    task.dateFinishedMap[selDate]=flag;
+  }else{
+    task.finished=flag;
+  }
+}
+
+//导出功能
+function downloadFile(content,fileName,type="text/plain"){
+  const blob=new Blob([content],{type:type});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function exportTaskRange(){
+  const expStart=document.getElementById("exportStartDate").value;
+  const expEnd=document.getElementById("exportEndDate").value;
+  if(!expStart||!expEnd){
+    alert("请选择导出的开始、结束日期");
+    return;
+  }
+  if(expStart>expEnd){
+    alert("开始日期不能晚于结束日期");
+    return;
+  }
+  const list=getTaskList();
+  const relatedTasks=list.filter(t=>{
+    if(t.repeatMode==="daily"){
+      return !(t.repeatEnd<expStart || t.repeatStart>expEnd);
+    }else{
+      return t.date>=expStart && t.date<=expEnd;
+    }
+  });
+
+  let totalTaskCount=relatedTasks.length;
+  let finishedCount=0;
+  let totalScore=getScore();
+  let totalSecond=0;
+  const subjectStat={};
+  relatedTasks.forEach(t=>{
+    totalSecond+=t.totalTime;
+    const subj=t.subject||"其他";
+    if(!subjectStat[subj]) subjectStat[subj]={count:0,finished:0,sec:0};
+    subjectStat[subj].count+=1;
+    subjectStat[subj].sec+=t.totalTime;
+    if(t.repeatMode==="daily"){
+      Object.keys(t.dateFinishedMap).forEach(d=>{
+        if(d>=expStart&&d<=expEnd&&t.dateFinishedMap[d]) finishedCount++;
+      });
+    }else{
+      if(t.finished) finishedCount++;
+    }
+  });
+
+  let txtReport="====================================\n";
+  txtReport+=`任务成果报告 时间段：${expStart} ~ ${expEnd}\n`;
+  txtReport+="====================================\n";
+  txtReport+=`总任务数量：${totalTaskCount}\n`;
+  txtReport+=`完成任务次数：${finishedCount}\n`;
+  txtReport+=`累计总耗时：${formatSec(totalSecond)}\n`;
+  txtReport+=`当前总积分：${totalScore}\n\n`;
+  txtReport+=`-----各学科统计-----\n`;
+  for(let s in subjectStat){
+    txtReport+=`【${s}】任务数：${subjectStat[s].count}，累计耗时：${formatSec(subjectStat[s].sec)}\n`;
+  }
+  txtReport+="\n-----任务明细-----\n";
+  relatedTasks.forEach(t=>{
+    txtReport+=`\n【${t.name}】学科：${t.subject||"其他"} `;
+    if(t.repeatMode==="daily"){
+      txtReport+=`类型：每日重复，周期${t.repeatStart}~${t.repeatEnd}\n`;
+      txtReport+=`  该区间完成日期：${Object.keys(t.dateFinishedMap).filter(d=>d>=expStart&&d<=expEnd&&t.dateFinishedMap[d]).join(", ")||"无"}\n`;
+    }else{
+      txtReport+=`类型：单次，计划日期：${t.date}，状态：${t.finished?"✅已完成":"⏳未完成"}\n`;
+    }
+    txtReport+=`  累计耗时：${formatSec(t.totalTime)}\n`;
+  });
+  txtReport+="\n====================================\n报告导出时间："+today+"\n";
+
+  downloadFile(txtReport,`任务成果_${expStart}_${expEnd}.txt`,"text/plain");
+  downloadFile(JSON.stringify(relatedTasks,null,2),`任务备份_${expStart}_${expEnd}.json`,"application/json");
+  alert("导出完成！已下载成果报告txt + 原始备份json");
+}
+
+function renderTasks(){
+  const selDate=document.getElementById("selectDate").value;
+  const list=getTaskList();
+  const collapseState=getCollapseState();
+  const uiState=getUiState();
+  document.getElementById("scoreText").innerText=getScore();
+
+  const dayAllTasks=list.filter(t=>{
+    if(t.repeatMode==="daily"){
+      return isInRange(selDate,t.repeatStart,t.repeatEnd);
+    }else{
+      return t.date===selDate;
+    }
+  });
+  const dayPending=dayAllTasks.filter(t=>!isTaskFinishedOnDate(t,selDate));
+  const dayFinished=dayAllTasks.filter(t=>isTaskFinishedOnDate(t,selDate));
+
+  const wrap=document.getElementById("taskListWrap");
+  if(dayPending.length===0){
+    wrap.innerHTML="<div class='empty'>当日暂无待办任务</div>";
+  }else{
+    const groups={};
+    dayPending.forEach(t=>{
+      const key=t.subject||"其他";
+      if(!groups[key]) groups[key]=[];
+      groups[key].push(t);
+    });
+    const groupKeys=Object.keys(groups).sort((a,b)=>{
+      if(a==="其他") return 1;
+      if(b==="其他") return -1;
+      return a.localeCompare(b,"zh-CN");
+    });
+    let html="";
+    for(let gKey of groupKeys){
+      const isCollapsed=!!collapseState[gKey];
+      html+=`<div class="group-title ${isCollapsed?'collapsed':''}" onclick="toggleGroup('${gKey}')">${gKey}</div>`;
+      html+=`<div class="group-wrap ${isCollapsed?'collapsed':''}">`;
+      for(let t of groups[gKey]){
+        const repeatTag = t.repeatMode==="daily" ? `<span class="tag-repeat">🔁每日重复</span>`:"";
+        html+=`<div class="task-card">
+          <div class="task-name">${t.name} ${repeatTag}</div>
+          <div class="time-text">累计耗时：${formatSec(getDisplayTime(t))}</div>
+          <div class="btn-wrap">
+            ${(!t.timing)?`<button class="btn-primary" onclick="startTimer(${t.id})">开始</button>`:""}
+            ${t.timing?`<button class="btn-warn" onclick="stopTimer(${t.id})">结束</button>`:""}
+            <button class="btn-success" onclick="finishTask(${t.id})">完成(+10分)</button>
+            <button class="btn-danger" onclick="deleteTask(${t.id})">删除</button>
+          </div>
+        </div>`;
+      }
+      html+=`</div>`;
+    }
+    wrap.innerHTML=html;
+  }
+
+  const finishedTitle=document.getElementById("finishedTitle");
+  const finishedWrap=document.getElementById("finishedWrap");
+  if(uiState.finishedSectionCollapsed){
+    finishedTitle.classList.add("collapsed");
+    finishedWrap.classList.add("section-wrap","collapsed");
+  }else{
+    finishedTitle.classList.remove("collapsed");
+    finishedWrap.classList.remove("collapsed");
+  }
+  if(dayFinished.length===0){
+    finishedWrap.innerHTML="<div class='empty'>暂无已完成任务</div>";
+  }else{
+    let html="";
+    dayFinished.forEach(t=>{
+      const repeatTag = t.repeatMode==="daily" ? `<span class="tag-repeat">🔁每日重复</span>`:"";
+      html+=`<div class="task-card">
+        <div class="task-name">${t.name}<span class="tag-finish">已完成</span> ${repeatTag}</div>
+        <div class="time-text">累计耗时：${formatSec(t.totalTime)}</div>
+        <div class="btn-wrap">
+          <button class="btn-undo" onclick="undoFinishTask(${t.id})">撤销完成</button>
+          <button class="btn-danger" onclick="deleteTask(${t.id})">删除</button>
+        </div>
+      </div>`;
+    });
+    finishedWrap.innerHTML=html;
+  }
+  renderExpire();
+}
+
+function renderExpire(){
+  const list=getTaskList();
+  const expireList=list.filter(t=>!t.finished && t.repeatMode!=="daily" && t.date < today);
+  const wrap=document.getElementById("expireWrap");
+  if(expireList.length===0){
+    wrap.innerHTML="<div class='empty'>暂无过期任务</div>";
+    return;
+  }
+  let html="";
+  expireList.forEach(t=>{
+    html+=`<div class="task-card">
+      <div class="task-name">${t.name}<span class="tag-expire">已过期(${t.date})</span></div>
+      <div class="time-text">累计耗时：${formatSec(getDisplayTime(t))}</div>
+      <div class="btn-wrap">
+        <button class="btn-gray" onclick="moveToToday(${t.id})">移到今日继续</button>
+        ${(!t.timing)?`<button class="btn-primary" onclick="startTimer(${t.id})">开始</button>`:""}
+        ${t.timing?`<button class="btn-warn" onclick="stopTimer(${t.id})">结束</button>`:""}
+        <button class="btn-success" onclick="finishTask(${t.id})">完成(+10分)</button>
+        <button class="btn-danger" onclick="deleteTask(${t.id})">删除</button>
+      </div>
+    </div>`;
+  });
+  wrap.innerHTML=html;
+}
+
+function moveToToday(id){
+  const list=getTaskList();
+  const idx=list.findIndex(x=>x.id===id);
+  list[idx].date=today;
+  saveTaskList(list);
+  renderTasks();
+}
+
+function startTimer(id){
+  const list=getTaskList();
+  const idx=list.findIndex(x=>x.id===id);
+  list[idx].timing=true;
+  list[idx].startTime=Date.now();
+  saveTaskList(list);
+  renderTasks();
+  startRealTimeRefresh();
+}
+
+function stopTimer(id){
+  const list=getTaskList();
+  const idx=list.findIndex(x=>x.id===id);
+  const cost=Math.round((Date.now()-list[idx].startTime)/1000);
+  list[idx].totalTime+=cost;
+  list[idx].timing=false;
+  list[idx].startTime=null;
+  saveTaskList(list);
+  renderTasks();
+  checkStopRealTime();
+}
+
+function finishTask(id){
+  const selDate=document.getElementById("selectDate").value;
+  const list=getTaskList();
+  const idx=list.findIndex(x=>x.id===id);
+  const task=list[idx];
+  if(isTaskFinishedOnDate(task,selDate)) return;
+  if(task.timing){
+    const cost=Math.round((Date.now()-task.startTime)/1000);
+    task.totalTime+=cost;
+    task.timing=false;
+    task.startTime=null;
+  }
+  setTaskFinishedOnDate(task,selDate,true);
+  saveTaskList(list);
+  setScore(getScore()+10);
+  renderTasks();
+  checkStopRealTime();
+}
+
+function undoFinishTask(id){
+  const selDate=document.getElementById("selectDate").value;
+  const list=getTaskList();
+  const idx=list.findIndex(x=>x.id===id);
+  const task=list[idx];
+  setTaskFinishedOnDate(task,selDate,false);
+  saveTaskList(list);
+  setScore(Math.max(0,getScore()-10));
+  renderTasks();
+}
+
+function startRealTimeRefresh(){
+  if(realTimeTimer) return;
+  realTimeTimer=setInterval(()=>{renderTasks();},1000);
+}
+
+function checkStopRealTime(){
+  const list=getTaskList();
+  const selDate=document.getElementById("selectDate").value;
+  const dayAllTasks=list.filter(t=>{
+    if(t.repeatMode==="daily"){
+      return isInRange(selDate,t.repeatStart,t.repeatEnd);
+    }else{
+      return t.date===selDate;
+    }
+  });
+  const hasTiming=dayAllTasks.some(t=>t.timing===true);
+  if(!hasTiming && realTimeTimer){
+    clearInterval(realTimeTimer);
+    realTimeTimer=null;
+  }
+}
+
+toggleRepeatInput();
+renderTasks();
+checkStopRealTime();
+</script>
+</body>
+</html>
