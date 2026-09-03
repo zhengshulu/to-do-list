@@ -101,19 +101,25 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
 <div id="viewInput" class="view">
   <div class="form-card">
     <div class="item-row">
-      <label>学科（选填）</label>
-      <select id="taskSubject">
+      <label>学科</label>
+      <select id="taskSubject" onchange="onSubjectChange()">
         <option value="">不选择学科</option>
         <option value="语文">语文</option>
         <option value="数学">数学</option>
         <option value="英语">英语</option>
         <option value="科学">科学</option>
-        <option value="道法">道法</option>
-        <option value="历史">历史</option>
-        <option value="地理">地理</option>
-        <option value="体育">体育</option>
-        <option value="艺术">艺术</option>
+        <option value="其他">其他</option>
       </select>
+    </div>
+    <div class="item-row">
+      <label>快速选择任务名称</label>
+      <select id="taskPresetSelect">
+        <option value="">--请先选择学科--</option>
+      </select>
+    </div>
+    <div class="item-row">
+      <label>任务名称（可自定义修改）</label>
+      <input id="taskName" placeholder="请输入要完成的任务">
     </div>
     <div class="item-row">
       <label>重复模式</label>
@@ -141,10 +147,6 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
       <div class="date-wrap">
         <input id="taskDate" type="date">
       </div>
-    </div>
-    <div class="item-row">
-      <label>任务名称</label>
-      <input id="taskName" placeholder="请输入要完成的任务">
     </div>
     <button class="btn-primary" onclick="addTask()">保存任务</button>
   </div>
@@ -201,6 +203,15 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
 </div>
 
 <script>
+// 各学科预设任务列表
+const subjectPresets = {
+  "语文": ["错词练习","阅读理解","小练笔","阅读"],
+  "数学": ["计算练习","学霸做题","错题练习","试卷"],
+  "英语": ["Jenny打卡","exmind背单词","西游记阅读","错词练习","语法练习"],
+  "科学": [],
+  "其他": []
+};
+
 if(!localStorage.getItem("taskList")) localStorage.setItem("taskList",JSON.stringify([]));
 if(!localStorage.getItem("score")) localStorage.setItem("score","0");
 if(!localStorage.getItem("groupCollapseState")) localStorage.setItem("groupCollapseState",JSON.stringify({}));
@@ -230,6 +241,26 @@ document.getElementById("exportStartDate").value=today;
 document.getElementById("exportEndDate").value=today;
 
 let realTimeTimer=null;
+
+// 切换学科，加载预设下拉
+function onSubjectChange(){
+  const subj = document.getElementById("taskSubject").value;
+  const presetSel = document.getElementById("taskPresetSelect");
+  presetSel.innerHTML = `<option value="">--选择预设任务--</option>`;
+  if(subj && subjectPresets[subj]){
+    subjectPresets[subj].forEach(item=>{
+      presetSel.innerHTML += `<option value="${item}">${item}</option>`;
+    })
+  }
+  document.getElementById("taskName").value = "";
+}
+// 选中预设，填充到任务输入框
+document.getElementById("taskPresetSelect").addEventListener("change",function(){
+  const val = this.value;
+  if(val){
+    document.getElementById("taskName").value = val;
+  }
+})
 
 function toggleRepeatInput(){
   const mode=document.getElementById("repeatMode").value;
@@ -261,14 +292,14 @@ function switchView(mode){
 
   if(mode==="input"){
     vInput.classList.add("show");
-    tInput.className="tab tab-active";
+    tInput.className="tab-active";
   }else if(mode==="list"){
     vList.classList.add("show");
-    tList.className="tab tab-active";
+    tList.className="tab-active";
     renderTasks();
   }else if(mode==="export"){
     vExport.classList.add("show");
-    tExport.className="tab tab-active";
+    tExport.className="tab-active";
   }
 }
 
@@ -321,6 +352,7 @@ function addTask(){
   saveTaskList(list);
   document.getElementById("taskName").value="";
   document.getElementById("taskSubject").value="";
+  document.getElementById("taskPresetSelect").innerHTML = `<option value="">--请先选择学科--</option>`;
   document.getElementById("repeatMode").value="none";
   toggleRepeatInput();
   alert("任务添加成功！");
