@@ -47,8 +47,11 @@ input[type="date"]{
   font-size:14.5px;
   font-weight:500;
   cursor:pointer;
-  /* 只过渡颜色背景，禁止transform过渡，杜绝点击跳动 */
+  /* 只过渡背景、文字颜色，禁止过渡阴影、transform、宽高 */
   transition: background-color 0.25s, color 0.25s;
+  /* 关闭移动端点击高亮、禁止选中文字 */
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 .tab-inactive{
   background:#e2e8f0;
@@ -57,13 +60,17 @@ input[type="date"]{
 .tab-active{
   background:#3b82f6;
   color:#ffffff;
-  /* 激活状态永远不带阴影 */
+  box-shadow:none !important;
 }
-/* 仅鼠标悬浮电脑端才出现阴影；手机触摸不会触发hover，所以不会抖动 */
+/* 删掉所有 :active transform位移，tab点击完全不动 */
+.tab:active{
+  transform:none !important;
+}
+/* 电脑端hover效果，手机触摸不会触发 */
 .tab:hover.tab-active{
-  box-shadow:0 4px 12px rgba(59,130,246,0.25);
+  background:#2563eb;
 }
-/* 删除 tab:active transform，底部tab点击完全不位移！ */
+
 
   
 /* 视图容器，默认隐藏 */
