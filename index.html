@@ -9,13 +9,20 @@
 body{padding:24px;max-width:720px;margin:0 auto;background:#f0f4f9;color:#2d3748;padding-bottom:90px;}
 
 /* ==========修复移动端date输入框溢出========== */
+.date-wrap {
+  width: 100%;
+  overflow: hidden;
+}
 input[type="date"]{
   min-width:0 !important;
   max-width:100% !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
-@media screen and (max‑width:480px){
+@media screen and (max-width:480px){
   input[type="date"]{
-    font‑size:14px;
+    font-size:13px;
+    padding:11px 12px;
   }
 }
 
@@ -118,16 +125,22 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
     <div id="repeatRangeRow" class="hidden-row">
       <div class="item-row">
         <label>周期‑开始日期</label>
-        <input id="repeatStart" type="date">
+        <div class="date-wrap">
+          <input id="repeatStart" type="date">
+        </div>
       </div>
       <div class="item-row">
         <label>周期‑结束日期</label>
-        <input id="repeatEnd" type="date">
+        <div class="date-wrap">
+          <input id="repeatEnd" type="date">
+        </div>
       </div>
     </div>
     <div class="item-row" id="singleDateRow">
       <label>计划执行日期</label>
-      <input id="taskDate" type="date">
+      <div class="date-wrap">
+        <input id="taskDate" type="date">
+      </div>
     </div>
     <div class="item-row">
       <label>任务名称</label>
@@ -146,7 +159,9 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
 
   <div class="item-row">
     <label>选择查看日期</label>
-    <input id="selectDate" type="date" onchange="renderTasks()">
+    <div class="date-wrap">
+      <input id="selectDate" type="date" onchange="renderTasks()">
+    </div>
   </div>
 
   <div id="taskListWrap"></div>
@@ -168,11 +183,15 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
   <div class="export-card">
     <div class="export-row">
       <label>导出开始日期</label>
-      <input id="exportStartDate" type="date">
+      <div class="date-wrap">
+        <input id="exportStartDate" type="date">
+      </div>
     </div>
     <div class="export-row">
       <label>导出结束日期</label>
-      <input id="exportEndDate" type="date">
+      <div class="date-wrap">
+        <input id="exportEndDate" type="date">
+      </div>
     </div>
     <div style="font-size:13px;color:#666;margin-bottom:12px;">
       导出时间段内任务成果报告（txt）+原始备份（json），用于复盘学习成果
