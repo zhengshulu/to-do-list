@@ -1,0 +1,16 @@
+{
+  "name": "任务计时打卡",
+  "short_name": "任务打卡",
+  "description": "待办任务计时打卡工具",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0f4f9",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
