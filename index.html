@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>任务计时打卡</title>
 <!-- ========== PWA主屏幕图标新增开始 ========== -->
 <link rel="icon" type="image/png" sizes="192x192" href="task.png">
@@ -12,11 +12,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="任务计时打卡">
 <link rel="apple-touch-icon" href="task.png">
-<!-- ========== PWA主屏幕图标新增结束 ========== -->  
+<!-- ========== PWA主屏幕图标新增结束 ========== -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
-body{padding:24px;max-width:720px;margin:0 auto;background:#f0f4f9;color:#2d3748;padding-bottom:90px;}
-
+body{padding:24px;max-width:720px;margin:0 auto;background:#f0f4f9;color:#2d3748;padding-bottom:110px;}
 /* ==========修复移动端date输入框溢出========== */
 .date-wrap {
   width: 100%;
@@ -34,8 +33,7 @@ input[type="date"]{
     padding:11px 12px;
   }
 }
-
-/* 底部Tab切换【已修复点击跳动】 */
+/* 底部Tab 全新美化，取消灰色 */
 .tab-bar{
   position:fixed;
   bottom:0;
@@ -45,56 +43,56 @@ input[type="date"]{
   margin:0 auto;
   background:#ffffff;
   display:flex;
-  gap:8px;
-  padding:12px 16px;
-  box-shadow:0 -2px 12px rgba(0,0,0,0.08);
+  gap:6px;
+  padding:10px 12px;
+  box-shadow:0 -2px 14px rgba(59,130,246,0.12);
 }
 .tab{
   flex:1;
   text-align:center;
-  padding:12px 0;
-  border-radius:12px;
-  font-size:14.5px;
-  font-weight:500;
+  padding:12px 4px;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:600;
   cursor:pointer;
-  transition: background-color 0.25s, color 0.25s;
+  transition: all 0.24s ease;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
 .tab-inactive{
-  background:#e2e8f0;
-  color:#64748b;
+  background:#ffffff;
+  color:#3b82f6;
+  border:1px solid #dbeafe;
 }
 .tab-active{
   background:#3b82f6;
   color:#ffffff;
-  box-shadow:none !important;
+  box-shadow:0 3px 8px rgba(59,130,246,0.3);
 }
 .tab:active{
-  transform:none !important;
+  transform:scale(0.96);
 }
 .tab:hover.tab-active{
   background:#2563eb;
 }
-
+.tab:hover.tab-inactive{
+  background:#f0f7ff;
+}
 /* 视图容器，默认隐藏 */
 .view{display:none;}
 .view.show{display:block;}
-
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
 .header h2{font-size:22px;font-weight:600;color:#1e293b;}
 .score{font-size:17px;color:#dc2626;font-weight:600;}
-
 .export-card{background:#ffffff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.07);}
 .export-row{margin-bottom:18px;}
-
 /* 表单卡片 */
 .form-card{background:#ffffff;padding:28px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.07);}
 .item-row{margin-bottom:22px;}
 label{display:block;margin-bottom:8px;font-size:15px;color:#475569;font-weight:500;}
-input,select{width:100%;padding:13px 16px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;background:#fbfcfe;transition:0.2s;}
-input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.15);}
-
+input,select,textarea{width:100%;padding:13px 16px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;background:#fbfcfe;transition:0.2s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.15);}
+textarea{min-height:80px;resize:vertical;}
 button{
   padding:8px 12px;
   border:none;
@@ -109,7 +107,7 @@ button:hover{
   opacity:0.92;
 }
 button:active{
-  transform:none !important;
+  transform:scale(0.97);
 }
 .btn-primary{background:#3b82f6;color:#fff;}
 .btn-warn{background:#ef4444;color:#fff;}
@@ -118,57 +116,72 @@ button:active{
 .btn-danger{background:#b91c1c;color:#fff;}
 .btn-undo{background:#f59e0b;color:#fff;}
 .btn-export{background:#8b5cf6;color:#fff;width:100%;margin-top:8px;padding:12px 18px;font-size:15px;}
-
+.btn-exchange{background:#ec4899;color:#fff;width:100%;margin-top:8px;padding:12px 18px;font-size:15px;}
+.btn-test-deduct{background:#0284c7;color:#fff;width:100%;margin-top:6px;padding:10px;font-size:14px;}
 /* 任务卡片 */
 .task-card{background:#ffffff;padding:20px;border-radius:14px;margin-bottom:14px;box-shadow:0 3px 12px rgba(0,0,0,0.06);}
 .task-name{font-size:17px;margin-bottom:8px;font-weight:500;display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+.task-desc{font-size:14px;color:#64748b;margin:6px 0;}
 .tag-finish{display:inline-block;font-size:13px;padding:2px 8px;border-radius:6px;background:#dcfce7;color:#059669;}
 .tag-expire{display:inline-block;font-size:13px;padding:2px 8px;border-radius:6px;background:#fee2e2;color:#dc2626;}
 .tag-repeat{display:inline-block;font-size:13px;padding:2px 8px;border-radius:6px;background:#dbeafe;color:#1d4ed8;}
+.tag-score{display:inline-block;font-size:13px;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#d97706;}
 .time-text{font-size:15px;color:#64748b;margin:10px 0;}
 .btn-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-
 .empty{text-align:center;color:#94a3b8;margin:60px 0;font-size:16px;}
 .section-title{font-size:18px;font-weight:600;margin:36px 0 12px 0;color:#334155;cursor:pointer;user-select:none;}
 .section-title::after{content:" ▾";font-size:12px;opacity:0.6;}
 .section-title.collapsed::after{content:" ▸";}
-
 /* 可点击学科分组标题，带动画 */
 .group-title{font-size:16px;font-weight:600;margin:24px 0 8px 0;color:#475569;padding:6px 10px;border-left:4px solid #3b82f6;
 cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:none;}
 .group-title:hover{background:#e8f0fe;padding-left:14px;}
 .group-title::after{content:" ▾";font-size:12px;opacity:0.6;}
 .group-title.collapsed::after{content:" ▸";}
-
 /* 分组容器，折叠动画 */
 .group-wrap{overflow:hidden;transition:max-height 0.35s ease;}
 .group-wrap.collapsed{max-height:0 !important;}
 .section-wrap{overflow:hidden;transition:max-height 0.35s ease;}
 .section-wrap.collapsed{max-height:0 !important;}
-
 .hidden-row{display:none;}
+.exchange-item{
+  padding:12px 14px;
+  background:#f8fafc;
+  border-radius:10px;
+  margin-bottom:8px;
+  font-size:14px;
+}
+/* 学科自定义输入容器 */
+.subject-input-wrap{
+  display:flex;
+  gap:8px;
+}
+.subject-input-wrap select{flex:2;}
+.subject-input-wrap input{flex:1;}
 </style>
 </head>
 <body>
 <div class="tab-bar">
-  <div id="tabInput" class="tab tab-inactive" onclick="switchView('input')">📝 任务录入</div>
-  <div id="tabList" class="tab tab-active" onclick="switchView('list')">📋 任务清单</div>
-  <div id="tabExport" class="tab tab-inactive" onclick="switchView('export')">💾数据导出</div>
+  <div id="tabInput" class="tab tab-active" onclick="switchView('input')">📝录入</div>
+  <div id="tabList" class="tab tab-inactive" onclick="switchView('list')">📋清单</div>
+  <div id="tabExport" class="tab tab-inactive" onclick="switchView('export')">💾数据</div>
 </div>
-
 <!-- 录入视图 -->
-<div id="viewInput" class="view">
+<div id="viewInput" class="view show">
   <div class="form-card">
     <div class="item-row">
-      <label>学科</label>
-      <select id="taskSubject" onchange="onSubjectChange()">
-        <option value="">不选择学科</option>
-        <option value="语文">语文</option>
-        <option value="数学">数学</option>
-        <option value="英语">英语</option>
-        <option value="科学">科学</option>
-        <option value="其他">其他</option>
-      </select>
+      <label>学科（下拉选择或自定义输入）</label>
+      <div class="subject-input-wrap">
+        <select id="taskSubjectSelect" onchange="onSubjectSelectChange()">
+          <option value="">不选择学科</option>
+          <option value="语文">语文</option>
+          <option value="数学">数学</option>
+          <option value="英语">英语</option>
+          <option value="科学">科学</option>
+          <option value="其他">其他</option>
+        </select>
+        <input id="taskSubjectCustom" placeholder="自定义学科">
+      </div>
     </div>
     <div class="item-row">
       <label>快速选择任务名称</label>
@@ -179,6 +192,14 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
     <div class="item-row">
       <label>任务名称（可自定义修改）</label>
       <input id="taskName" placeholder="请输入要完成的任务">
+    </div>
+    <div class="item-row">
+      <label>任务内容/备注</label>
+      <textarea id="taskContent" placeholder="填写任务详细内容、要求等，选填"></textarea>
+    </div>
+    <div class="item-row">
+      <label>任务完成获得积分</label>
+      <input id="taskScore" type="number" min="0" value="10" placeholder="默认10分，可自定义">
     </div>
     <div class="item-row">
       <label>重复模式</label>
@@ -210,40 +231,56 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
     <button class="btn-primary" onclick="addTask()">保存任务</button>
   </div>
 </div>
-
-<!-- 清单视图，默认show -->
-<div id="viewList" class="view show">
+<!-- 清单视图 -->
+<div id="viewList" class="view">
   <div class="header">
     <h2>任务清单</h2>
     <div class="score">总积分：<span id="scoreText">0</span></div>
   </div>
-
+  <button class="btn-test-deduct" onclick="checkDeductExpireScore();renderTasks();alert('已手动执行过期扣分检测')">🔧手动执行过期扣分检测(调试用)</button>
   <div class="item-row">
     <label>选择查看日期</label>
     <div class="date-wrap">
       <input id="selectDate" type="date" onchange="renderTasks()">
     </div>
   </div>
-
   <div id="taskListWrap"></div>
-
   <div id="finishedSection">
     <div class="section-title" id="finishedTitle" onclick="toggleFinishedSection()">✅今日已完成</div>
     <div id="finishedWrap" class="section-wrap"></div>
   </div>
-
   <div class="section-title">⏰ 过期未完成任务</div>
   <div id="expireWrap" class="section-wrap"></div>
 </div>
-
-<!-- 导出独立页面 -->
+<!-- 数据页面：原有导出导入 + 积分兑换全部放这里 -->
 <div id="viewExport" class="view">
   <div class="header">
-    <h2>💾数据导出</h2>
+    <h2>💾数据与积分管理</h2>
   </div>
   <div class="export-card">
+    <!-- =====积分兑换区域===== -->
     <div class="export-row">
-      <label>导出开始日期</label>
+      <label>🎁积分兑换（规则：100积分 = 1元现金）</label>
+      <div style="margin:8px 0;">
+        <p>当前剩余积分：<span id="exRemainingScore" style="color:#dc2626;font-weight:bold;">0</span></p>
+        <p>累计已兑换金额：<span id="exTotalMoney" style="color:#059669;font-weight:bold;">0</span> 元</p>
+      </div>
+    </div>
+    <div class="export-row">
+      <label>输入要兑换的积分（必须是100的倍数）</label>
+      <input id="exchangeScoreInput" type="number" min="100" step="100" placeholder="例如：200">
+    </div>
+    <button class="btn-exchange" onclick="doExchange()">执行兑换</button>
+    <div style="margin-top:20px;">
+      <label>兑换记录</label>
+      <div id="exchangeLogWrap"></div>
+    </div>
+
+    <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0;">
+
+    <!-- =====原有时间段报告导出===== -->
+    <div class="export-row">
+      <label>导出时间段成果报告（原有功能）</label>
       <div class="date-wrap">
         <input id="exportStartDate" type="date">
       </div>
@@ -258,9 +295,21 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
       导出时间段内任务成果报告（txt）+原始备份（json），用于复盘学习成果
     </div>
     <button class="btn-export" onclick="exportTaskRange()">导出成果文件</button>
+
+    <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0;">
+
+    <div class="export-row">
+      <label>完整全部数据【导出备份】</label>
+      <div style="font-size:13px;color:#666;margin-bottom:12px;">导出全部本地存储，包含任务、积分、兑换记录</div>
+      <button class="btn-export" onclick="exportAllData()">导出全部数据备份</button>
+    </div>
+    <div class="export-row">
+      <label>完整全部数据【导入恢复】</label>
+      <div style="font-size:13px;color:#ef4444;margin-bottom:12px;">⚠️导入会覆盖当前所有本地数据，请先备份！</div>
+      <input type="file" id="importFileInput" accept=".json" onchange="importAllData(this.files)">
+    </div>
   </div>
 </div>
-
 <script>
 // 各学科预设任务列表
 const subjectPresets = {
@@ -271,39 +320,70 @@ const subjectPresets = {
   "其他": []
 };
 
+// 获取本地日期字符串 YYYY‑MM‑DD 修复时区问题
+function getLocalTodayStr(){
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${year}-${month}-${day}`;
+}
+const today = getLocalTodayStr();
+
+// 初始化本地存储字段
 if(!localStorage.getItem("taskList")) localStorage.setItem("taskList",JSON.stringify([]));
 if(!localStorage.getItem("score")) localStorage.setItem("score","0");
 if(!localStorage.getItem("groupCollapseState")) localStorage.setItem("groupCollapseState",JSON.stringify({}));
 if(!localStorage.getItem("uiState")) localStorage.setItem("uiState",JSON.stringify({finishedSectionCollapsed:false}));
+if(!localStorage.getItem("exchangeLog")) localStorage.setItem("exchangeLog",JSON.stringify([]));
+if(!localStorage.getItem("totalExchangedMoney")) localStorage.setItem("totalExchangedMoney","0");
 
 function getTaskList(){
   const arr=JSON.parse(localStorage.getItem("taskList"));
   arr.forEach(t=>{
     if(!t.dateFinishedMap) t.dateFinishedMap={};
+    if(t.taskScore===undefined) t.taskScore = 10;
+    if(!t.content) t.content="";
+    if(!t.deductFlag) t.deductFlag={}; //扣分标记，避免重复扣过期任务
   });
   return arr;
 }
 function saveTaskList(arr){localStorage.setItem("taskList",JSON.stringify(arr));}
 function getScore(){return Number(localStorage.getItem("score"));}
-function setScore(s){localStorage.setItem("score",String(s));document.getElementById("scoreText").innerText=s;}
+function setScore(s){
+  s = Math.max(0, s);
+  localStorage.setItem("score",String(s));
+  document.getElementById("scoreText").innerText=s;
+}
 function getCollapseState(){return JSON.parse(localStorage.getItem("groupCollapseState"));}
 function setCollapseState(obj){localStorage.setItem("groupCollapseState",JSON.stringify(obj));}
 function getUiState(){return JSON.parse(localStorage.getItem("uiState"));}
 function setUiState(obj){localStorage.setItem("uiState",JSON.stringify(obj));}
+function getExchangeLog(){return JSON.parse(localStorage.getItem("exchangeLog"));}
+function saveExchangeLog(arr){localStorage.setItem("exchangeLog",JSON.stringify(arr));}
+function getTotalExchangedMoney(){return Number(localStorage.getItem("totalExchangedMoney"));}
+function setTotalExchangedMoney(v){localStorage.setItem("totalExchangedMoney",String(v));}
 
-const today=new Date().toISOString().slice(0,10);
 document.getElementById("taskDate").value=today;
 document.getElementById("repeatStart").value=today;
 document.getElementById("repeatEnd").value=today;
 document.getElementById("selectDate").value=today;
 document.getElementById("exportStartDate").value=today;
 document.getElementById("exportEndDate").value=today;
-
 let realTimeTimer=null;
 
-// 切换学科，加载预设下拉
-function onSubjectChange(){
-  const subj = document.getElementById("taskSubject").value;
+// 获取最终学科（下拉优先，自定义输入不为空就取自定义）
+function getFinalSubject(){
+  let selVal = document.getElementById("taskSubjectSelect").value.trim();
+  let customVal = document.getElementById("taskSubjectCustom").value.trim();
+  if(customVal) return customVal;
+  return selVal;
+}
+
+//切换学科下拉
+function onSubjectSelectChange(){
+  document.getElementById("taskSubjectCustom").value="";
+  const subj = document.getElementById("taskSubjectSelect").value;
   const presetSel = document.getElementById("taskPresetSelect");
   presetSel.innerHTML = `<option value="">--选择预设任务--</option>`;
   if(subj && subjectPresets[subj]){
@@ -313,6 +393,7 @@ function onSubjectChange(){
   }
   document.getElementById("taskName").value = "";
 }
+
 // 选中预设，填充到任务输入框
 document.getElementById("taskPresetSelect").addEventListener("change",function(){
   const val = this.value;
@@ -339,12 +420,15 @@ function switchView(mode){
   const vInput=document.getElementById("viewInput");
   const vList=document.getElementById("viewList");
   const vExport=document.getElementById("viewExport");
+
   const tInput=document.getElementById("tabInput");
   const tList=document.getElementById("tabList");
   const tExport=document.getElementById("tabExport");
+
   vInput.classList.remove("show");
   vList.classList.remove("show");
   vExport.classList.remove("show");
+
   tInput.className="tab tab-inactive";
   tList.className="tab tab-inactive";
   tExport.className="tab tab-inactive";
@@ -359,6 +443,7 @@ function switchView(mode){
   }else if(mode==="export"){
     vExport.classList.add("show");
     tExport.className="tab tab-active";
+    renderExchangePage();
   }
 }
 
@@ -368,7 +453,6 @@ function toggleGroup(groupKey){
   setCollapseState(state);
   renderTasks();
 }
-
 function toggleFinishedSection(){
   const ui=getUiState();
   ui.finishedSectionCollapsed=!ui.finishedSectionCollapsed;
@@ -376,18 +460,26 @@ function toggleFinishedSection(){
   renderTasks();
 }
 
+// 保存任务，留在录入页面
 function addTask(){
-  const subject=document.getElementById("taskSubject").value;
+  const subject=getFinalSubject();
   const name=document.getElementById("taskName").value.trim();
+  const content = document.getElementById("taskContent").value.trim();
+  const taskScore = Number(document.getElementById("taskScore").value)||0;
   const repeatMode=document.getElementById("repeatMode").value;
+
   if(!name){alert("请填写任务名称");return;}
+
   let task={
     id:Date.now(),
     subject:subject,
     name:name,
+    content:content,
+    taskScore:taskScore,
     repeatMode:repeatMode,
     finished:false,
     dateFinishedMap:{},
+    deductFlag:{},
     timing:false,
     totalTime:0,
     startTime:null
@@ -409,13 +501,17 @@ function addTask(){
   const list=getTaskList();
   list.push(task);
   saveTaskList(list);
+
+  //清空表单，不切换页面
   document.getElementById("taskName").value="";
-  document.getElementById("taskSubject").value="";
+  document.getElementById("taskContent").value="";
+  document.getElementById("taskScore").value="10";
+  document.getElementById("taskSubjectSelect").value="";
+  document.getElementById("taskSubjectCustom").value="";
   document.getElementById("taskPresetSelect").innerHTML = `<option value="">--请先选择学科--</option>`;
   document.getElementById("repeatMode").value="none";
   toggleRepeatInput();
   alert("任务添加成功！");
-  switchView("list");
 }
 
 function deleteTask(id){
@@ -425,24 +521,20 @@ function deleteTask(id){
   saveTaskList(list);
   renderTasks();
 }
-
 function formatSec(sec){
   let h=Math.floor(sec/3600);
   let m=Math.floor((sec%3600)/60);
   let s=sec%60;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
-
 function getDisplayTime(task){
   if(!task.timing) return task.totalTime;
   const diff=Math.round((Date.now()-task.startTime)/1000);
   return task.totalTime + diff;
 }
-
 function isInRange(checkDate,start,end){
   return checkDate >= start && checkDate <= end;
 }
-
 function isTaskFinishedOnDate(task,selDate){
   if(task.repeatMode==="daily"){
     return !!task.dateFinishedMap[selDate];
@@ -450,7 +542,6 @@ function isTaskFinishedOnDate(task,selDate){
     return task.finished;
   }
 }
-
 function setTaskFinishedOnDate(task,selDate,flag){
   if(task.repeatMode==="daily"){
     task.dateFinishedMap[selDate]=flag;
@@ -459,7 +550,49 @@ function setTaskFinishedOnDate(task,selDate,flag){
   }
 }
 
-//导出功能
+// ========= 修复后过期未完成扣分逻辑，全部字符串比较，无时区BUG =========
+function getDayList(startStr,endStr){
+  const res=[];
+  let d=new Date(startStr);
+  const end=new Date(endStr);
+  while(d <= end){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    res.push(`${y}-${m}-${day}`);
+    d.setDate(d.getDate()+1);
+  }
+  return res;
+}
+
+function checkDeductExpireScore(){
+  let list = getTaskList();
+  let changed = false;
+  for(let t of list){
+    //单次任务
+    if(t.repeatMode === "none"){
+      if(t.date < today && !t.finished && !t.deductFlag[t.date]){
+        setScore(getScore() - t.taskScore);
+        t.deductFlag[t.date] = true;
+        changed = true;
+      }
+    }
+    //每日重复任务
+    if(t.repeatMode === "daily"){
+      const dayArr = getDayList(t.repeatStart,t.repeatEnd);
+      for(let ds of dayArr){
+        if(ds < today && !t.dateFinishedMap[ds] && !t.deductFlag[ds]){
+          setScore(getScore() - t.taskScore);
+          t.deductFlag[ds] = true;
+          changed = true;
+        }
+      }
+    }
+  }
+  if(changed) saveTaskList(list);
+}
+
+//下载文件
 function downloadFile(content,fileName,type="text/plain"){
   const blob=new Blob([content],{type:type});
   const a=document.createElement("a");
@@ -489,7 +622,6 @@ function exportTaskRange(){
       return t.date>=expStart && t.date<=expEnd;
     }
   });
-
   let totalTaskCount=relatedTasks.length;
   let finishedCount=0;
   let totalScore=getScore();
@@ -509,7 +641,6 @@ function exportTaskRange(){
       if(t.finished) finishedCount++;
     }
   });
-
   let txtReport="====================================\n";
   txtReport+=`任务成果报告 时间段：${expStart} ~ ${expEnd}\n`;
   txtReport+="====================================\n";
@@ -523,7 +654,8 @@ function exportTaskRange(){
   }
   txtReport+="\n-----任务明细-----\n";
   relatedTasks.forEach(t=>{
-    txtReport+=`\n【${t.name}】学科：${t.subject||"其他"} `;
+    txtReport+=`\n【${t.name}】学科：${t.subject||"其他"} 任务积分：${t.taskScore}\n`;
+    if(t.content) txtReport+=`备注：${t.content}\n`;
     if(t.repeatMode==="daily"){
       txtReport+=`类型：每日重复，周期${t.repeatStart}~${t.repeatEnd}\n`;
       txtReport+=`  该区间完成日期：${Object.keys(t.dateFinishedMap).filter(d=>d>=expStart&&d<=expEnd&&t.dateFinishedMap[d]).join(", ")||"无"}\n`;
@@ -533,19 +665,59 @@ function exportTaskRange(){
     txtReport+=`  累计耗时：${formatSec(t.totalTime)}\n`;
   });
   txtReport+="\n====================================\n报告导出时间："+today+"\n";
-
   downloadFile(txtReport,`任务成果_${expStart}_${expEnd}.txt`,"text/plain");
   downloadFile(JSON.stringify(relatedTasks,null,2),`任务备份_${expStart}_${expEnd}.json`,"application/json");
   alert("导出完成！已下载成果报告txt + 原始备份json");
 }
 
+// ========= 全部数据导出导入 =========
+function exportAllData(){
+  const fullData = {
+    taskList: JSON.parse(localStorage.getItem("taskList")),
+    score: getScore(),
+    groupCollapseState: JSON.parse(localStorage.getItem("groupCollapseState")),
+    uiState: JSON.parse(localStorage.getItem("uiState")),
+    exchangeLog: getExchangeLog(),
+    totalExchangedMoney: getTotalExchangedMoney(),
+    exportTime: new Date().toISOString()
+  };
+  downloadFile(JSON.stringify(fullData,null,2),"全部任务完整备份.json","application/json");
+}
+
+function importAllData(fileList){
+  const file = fileList[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const obj = JSON.parse(e.target.result);
+      if(!obj.taskList){
+        alert("备份文件格式不正确！");
+        return;
+      }
+      if(!confirm("⚠️确认导入？导入将覆盖现在全部数据！建议先导出备份！")) return;
+      localStorage.setItem("taskList", JSON.stringify(obj.taskList));
+      localStorage.setItem("score", String(obj.score||0));
+      localStorage.setItem("groupCollapseState", JSON.stringify(obj.groupCollapseState||{}));
+      localStorage.setItem("uiState", JSON.stringify(obj.uiState||{}));
+      localStorage.setItem("exchangeLog", JSON.stringify(obj.exchangeLog||[]));
+      localStorage.setItem("totalExchangedMoney", String(obj.totalExchangedMoney||0));
+      alert("导入成功！");
+      renderTasks();
+    }catch(err){
+      alert("解析JSON失败，文件损坏！");
+    }
+  };
+  reader.readAsText(file);
+}
+
 function renderTasks(){
+  checkDeductExpireScore();
   const selDate=document.getElementById("selectDate").value;
   const list=getTaskList();
   const collapseState=getCollapseState();
   const uiState=getUiState();
   document.getElementById("scoreText").innerText=getScore();
-
   const dayAllTasks=list.filter(t=>{
     if(t.repeatMode==="daily"){
       return isInRange(selDate,t.repeatStart,t.repeatEnd);
@@ -555,7 +727,6 @@ function renderTasks(){
   });
   const dayPending=dayAllTasks.filter(t=>!isTaskFinishedOnDate(t,selDate));
   const dayFinished=dayAllTasks.filter(t=>isTaskFinishedOnDate(t,selDate));
-
   const wrap=document.getElementById("taskListWrap");
   if(dayPending.length===0){
     wrap.innerHTML="<div class='empty'>当日暂无待办任务</div>";
@@ -578,13 +749,16 @@ function renderTasks(){
       html+=`<div class="group-wrap ${isCollapsed?'collapsed':''}">`;
       for(let t of groups[gKey]){
         const repeatTag = t.repeatMode==="daily" ? `<span class="tag-repeat">🔁每日重复</span>`:"";
+        const scoreTag = `<span class="tag-score">积分${t.taskScore}</span>`;
+        const contentHtml = t.content ? `<div class="task-desc">📝${t.content}</div>`:"";
         html+=`<div class="task-card">
-          <div class="task-name">${t.name} ${repeatTag}</div>
+          <div class="task-name">${t.name} ${repeatTag} ${scoreTag}</div>
+          ${contentHtml}
           <div class="time-text">累计耗时：${formatSec(getDisplayTime(t))}</div>
           <div class="btn-wrap">
             ${(!t.timing)?`<button class="btn-primary" onclick="startTimer(${t.id})">开始</button>`:""}
             ${t.timing?`<button class="btn-warn" onclick="stopTimer(${t.id})">结束</button>`:""}
-            <button class="btn-success" onclick="finishTask(${t.id})">完成(+10分)</button>
+            <button class="btn-success" onclick="finishTask(${t.id})">完成(+${t.taskScore}分)</button>
             <button class="btn-danger" onclick="deleteTask(${t.id})">删除</button>
           </div>
         </div>`;
@@ -593,7 +767,6 @@ function renderTasks(){
     }
     wrap.innerHTML=html;
   }
-
   const finishedTitle=document.getElementById("finishedTitle");
   const finishedWrap=document.getElementById("finishedWrap");
   if(uiState.finishedSectionCollapsed){
@@ -609,8 +782,11 @@ function renderTasks(){
     let html="";
     dayFinished.forEach(t=>{
       const repeatTag = t.repeatMode==="daily" ? `<span class="tag-repeat">🔁每日重复</span>`:"";
+      const scoreTag = `<span class="tag-score">积分${t.taskScore}</span>`;
+      const contentHtml = t.content ? `<div class="task-desc">📝${t.content}</div>`:"";
       html+=`<div class="task-card">
-        <div class="task-name">${t.name}<span class="tag-finish">已完成</span> ${repeatTag}</div>
+        <div class="task-name">${t.name}<span class="tag-finish">已完成</span> ${repeatTag} ${scoreTag}</div>
+        ${contentHtml}
         <div class="time-text">累计耗时：${formatSec(t.totalTime)}</div>
         <div class="btn-wrap">
           <button class="btn-undo" onclick="undoFinishTask(${t.id})">撤销完成</button>
@@ -622,7 +798,6 @@ function renderTasks(){
   }
   renderExpire();
 }
-
 function renderExpire(){
   const list=getTaskList();
   const expireList=list.filter(t=>!t.finished && t.repeatMode!=="daily" && t.date < today);
@@ -633,21 +808,23 @@ function renderExpire(){
   }
   let html="";
   expireList.forEach(t=>{
+    const scoreTag = `<span class="tag-score">积分${t.taskScore}</span>`;
+    const contentHtml = t.content ? `<div class="task-desc">📝${t.content}</div>`:"";
     html+=`<div class="task-card">
-      <div class="task-name">${t.name}<span class="tag-expire">已过期(${t.date})</span></div>
+      <div class="task-name">${t.name}<span class="tag-expire">已过期(${t.date})</span> ${scoreTag}</div>
+      ${contentHtml}
       <div class="time-text">累计耗时：${formatSec(getDisplayTime(t))}</div>
       <div class="btn-wrap">
         <button class="btn-gray" onclick="moveToToday(${t.id})">移到今日继续</button>
         ${(!t.timing)?`<button class="btn-primary" onclick="startTimer(${t.id})">开始</button>`:""}
         ${t.timing?`<button class="btn-warn" onclick="stopTimer(${t.id})">结束</button>`:""}
-        <button class="btn-success" onclick="finishTask(${t.id})">完成(+10分)</button>
+        <button class="btn-success" onclick="finishTask(${t.id})">完成(+${t.taskScore}分)</button>
         <button class="btn-danger" onclick="deleteTask(${t.id})">删除</button>
       </div>
     </div>`;
   });
   wrap.innerHTML=html;
 }
-
 function moveToToday(id){
   const list=getTaskList();
   const idx=list.findIndex(x=>x.id===id);
@@ -655,7 +832,6 @@ function moveToToday(id){
   saveTaskList(list);
   renderTasks();
 }
-
 function startTimer(id){
   const list=getTaskList();
   const idx=list.findIndex(x=>x.id===id);
@@ -665,7 +841,6 @@ function startTimer(id){
   renderTasks();
   startRealTimeRefresh();
 }
-
 function stopTimer(id){
   const list=getTaskList();
   const idx=list.findIndex(x=>x.id===id);
@@ -677,7 +852,6 @@ function stopTimer(id){
   renderTasks();
   checkStopRealTime();
 }
-
 function finishTask(id){
   const selDate=document.getElementById("selectDate").value;
   const list=getTaskList();
@@ -692,11 +866,10 @@ function finishTask(id){
   }
   setTaskFinishedOnDate(task,selDate,true);
   saveTaskList(list);
-  setScore(getScore()+10);
+  setScore(getScore()+task.taskScore);
   renderTasks();
   checkStopRealTime();
 }
-
 function undoFinishTask(id){
   const selDate=document.getElementById("selectDate").value;
   const list=getTaskList();
@@ -704,15 +877,13 @@ function undoFinishTask(id){
   const task=list[idx];
   setTaskFinishedOnDate(task,selDate,false);
   saveTaskList(list);
-  setScore(Math.max(0,getScore()-10));
+  setScore(Math.max(0,getScore()-task.taskScore));
   renderTasks();
 }
-
 function startRealTimeRefresh(){
   if(realTimeTimer) return;
   realTimeTimer=setInterval(()=>{renderTasks();},1000);
 }
-
 function checkStopRealTime(){
   const list=getTaskList();
   const selDate=document.getElementById("selectDate").value;
@@ -728,6 +899,59 @@ function checkStopRealTime(){
     clearInterval(realTimeTimer);
     realTimeTimer=null;
   }
+}
+
+// =========积分兑换相关=========
+function renderExchangePage(){
+  const score = getScore();
+  const totalMoney = getTotalExchangedMoney();
+  document.getElementById("exRemainingScore").innerText = score;
+  document.getElementById("exTotalMoney").innerText = totalMoney.toFixed(2);
+  const log = getExchangeLog();
+  let wrap = document.getElementById("exchangeLogWrap");
+  if(log.length===0){
+    wrap.innerHTML = `<div class="empty">暂无兑换记录</div>`;
+  }else{
+    let html = "";
+    log.slice().reverse().forEach(item=>{
+      html += `<div class="exchange-item">
+        ${item.time}｜消耗${item.costScore}积分 →兑换${item.money}元
+      </div>`;
+    });
+    wrap.innerHTML = html;
+  }
+}
+
+function doExchange(){
+  const inputVal = Number(document.getElementById("exchangeScoreInput").value);
+  if(!inputVal || inputVal <=0){
+    alert("请输入要兑换的积分");
+    return;
+  }
+  if(inputVal %100 !== 0){
+    alert("积分必须是100的倍数！");
+    return;
+  }
+  const remain = getScore();
+  if(inputVal > remain){
+    alert(`积分不足！当前剩余：${remain}`);
+    return;
+  }
+  const money = inputVal / 100;
+  if(!confirm(`确认兑换：${inputVal}积分 = ${money}元？`)) return;
+
+  setScore(remain - inputVal);
+  setTotalExchangedMoney(getTotalExchangedMoney() + money);
+  const logArr = getExchangeLog();
+  logArr.push({
+    costScore:inputVal,
+    money:money,
+    time:new Date().toLocaleString()
+  });
+  saveExchangeLog(logArr);
+  document.getElementById("exchangeScoreInput").value="";
+  alert("兑换成功！");
+  renderExchangePage();
 }
 
 toggleRepeatInput();
