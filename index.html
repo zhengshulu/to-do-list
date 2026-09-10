@@ -166,12 +166,12 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
 </head>
 <body>
 <div class="tab-bar">
-  <div id="tabInput" class="tab tab-active" onclick="switchView('input')">📝录入</div>
-  <div id="tabList" class="tab tab-inactive" onclick="switchView('list')">📋清单</div>
+  <div id="tabInput" class="tab tab-inactive" onclick="switchView('input')">📝录入</div>
+  <div id="tabList" class="tab tab-active" onclick="switchView('list')">📋清单</div>
   <div id="tabExport" class="tab tab-inactive" onclick="switchView('export')">💾数据</div>
 </div>
 <!-- 录入视图 -->
-<div id="viewInput" class="view show">
+<div id="viewInput" class="view">
   <div class="form-card">
     <div class="item-row">
       <label>学科（下拉选择或自定义输入）</label>
@@ -236,7 +236,7 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
   </div>
 </div>
 <!-- 清单视图 -->
-<div id="viewList" class="view">
+<div id="viewList" class="view show">
   <div class="header">
     <h2>任务清单</h2>
     <div class="score">总积分：<span id="scoreText">0</span></div>
