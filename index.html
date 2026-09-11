@@ -162,6 +162,48 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
 }
 .subject-input-wrap select{flex:2;}
 .subject-input-wrap input{flex:1;}
+
+/*====自定义三按钮弹窗====*/
+.modal-mask{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+  padding:16px;
+}
+.modal-mask.show{
+  display:flex;
+}
+.modal-box{
+  background:#fff;
+  border-radius:16px;
+  max-width:340px;
+  width:100%;
+  padding:22px;
+}
+.modal-title{
+  font-size:17px;
+  font-weight:600;
+  margin-bottom:18px;
+  text-align:center;
+}
+.modal-btn-group{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.modal-btn-group button{
+  width:100%;
+  margin:0;
+  padding:12px;
+  font-size:15px;
+}
+.btn-modal-day{background:#f59e0b;color:white;}
+.btn-modal-all{background:#dc2626;color:white;}
+.btn-modal-cancel{background:#e2e8f0;color:#333;}
 </style>
 </head>
 <body>
@@ -278,9 +320,7 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
       <label>兑换记录</label>
       <div id="exchangeLogWrap"></div>
     </div>
-
     <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0;">
-
     <!-- =====原有时间段报告导出===== -->
     <div class="export-row">
       <label>导出时间段成果报告（原有功能）</label>
@@ -298,9 +338,7 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
       导出时间段内任务成果报告（txt）+原始备份（json），用于复盘学习成果
     </div>
     <button class="btn-export" onclick="exportTaskRange()">导出成果文件</button>
-
     <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0;">
-
     <div class="export-row">
       <label>完整全部数据【导出备份】</label>
       <div style="font-size:13px;color:#666;margin-bottom:12px;">导出全部本地存储，包含任务、积分、兑换记录</div>
@@ -313,6 +351,19 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
     </div>
   </div>
 </div>
+
+<!--自定义弹窗DOM 三按钮-->
+<div id="modalMask" class="modal-mask">
+  <div class="modal-box">
+    <div class="modal-title">🔁每日重复任务</div>
+    <div class="modal-btn-group">
+      <button class="btn-modal-day" onclick="modalActionDay()">1、仅跳过当前选中这一天</button>
+      <button class="btn-modal-all" onclick="modalActionAll()">2、删除整个重复任务序列</button>
+      <button class="btn-modal-cancel" onclick="modalClose()">3、取消操作</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // 各学科预设任务列表
 const subjectPresets = {
@@ -322,7 +373,6 @@ const subjectPresets = {
   "科学": [],
   "其他": []
 };
-
 // 获取本地日期字符串 YYYY‑MM‑DD 修复时区问题
 function getLocalTodayStr(){
   const d = new Date();
@@ -332,7 +382,6 @@ function getLocalTodayStr(){
   return `${year}-${month}-${day}`;
 }
 const today = getLocalTodayStr();
-
 // 初始化本地存储字段
 if(!localStorage.getItem("taskList")) localStorage.setItem("taskList",JSON.stringify([]));
 if(!localStorage.getItem("score")) localStorage.setItem("score","0");
@@ -340,6 +389,35 @@ if(!localStorage.getItem("groupCollapseState")) localStorage.setItem("groupColla
 if(!localStorage.getItem("uiState")) localStorage.setItem("uiState",JSON.stringify({finishedSectionCollapsed:false}));
 if(!localStorage.getItem("exchangeLog")) localStorage.setItem("exchangeLog",JSON.stringify([]));
 if(!localStorage.getItem("totalExchangedMoney")) localStorage.setItem("totalExchangedMoney","0");
+
+//弹窗全局变量
+let modalCurrentTaskId = null;
+function modalClose(){
+  modalCurrentTaskId = null;
+  document.getElementById("modalMask").classList.remove("show");
+}
+function modalActionDay(){
+  const selDate = document.getElementById("selectDate").value;
+  const list = getTaskList();
+  const idx = list.findIndex(x=>x.id === modalCurrentTaskId);
+  const task = list[idx];
+  task.skipDaySet[selDate] = true;
+  saveTaskList(list);
+  modalClose();
+  renderTasks();
+  alert("已跳过当前日期任务");
+}
+function modalActionAll(){
+  if(!confirm("⚠️确认彻底删除整个重复任务序列？所有记录将丢失！")){
+    modalClose();
+    return;
+  }
+  let list = getTaskList();
+  list = list.filter(item=>item.id !== modalCurrentTaskId);
+  saveTaskList(list);
+  modalClose();
+  renderTasks();
+}
 
 function getTaskList(){
   const arr=JSON.parse(localStorage.getItem("taskList"));
@@ -349,7 +427,6 @@ function getTaskList(){
     if(!t.content) t.content="";
     if(!t.deductFlag) t.deductFlag={}; //扣分标记，避免重复扣过期任务
     if(!t.skipDaySet) t.skipDaySet={}; //重复任务被跳过/删掉的单日
-
   });
   return arr;
 }
@@ -368,7 +445,6 @@ function getExchangeLog(){return JSON.parse(localStorage.getItem("exchangeLog"))
 function saveExchangeLog(arr){localStorage.setItem("exchangeLog",JSON.stringify(arr));}
 function getTotalExchangedMoney(){return Number(localStorage.getItem("totalExchangedMoney"));}
 function setTotalExchangedMoney(v){localStorage.setItem("totalExchangedMoney",String(v));}
-
 document.getElementById("taskDate").value=today;
 document.getElementById("repeatStart").value=today;
 document.getElementById("repeatEnd").value=today;
@@ -376,7 +452,6 @@ document.getElementById("selectDate").value=today;
 document.getElementById("exportStartDate").value=today;
 document.getElementById("exportEndDate").value=today;
 let realTimeTimer=null;
-
 // 获取最终学科（下拉优先，自定义输入不为空就取自定义）
 function getFinalSubject(){
   let selVal = document.getElementById("taskSubjectSelect").value.trim();
@@ -384,7 +459,6 @@ function getFinalSubject(){
   if(customVal) return customVal;
   return selVal;
 }
-
 //切换学科下拉
 function onSubjectSelectChange(){
   document.getElementById("taskSubjectCustom").value="";
@@ -398,7 +472,6 @@ function onSubjectSelectChange(){
   }
   document.getElementById("taskName").value = "";
 }
-
 // 选中预设，填充到任务输入框
 document.getElementById("taskPresetSelect").addEventListener("change",function(){
   const val = this.value;
@@ -406,7 +479,6 @@ document.getElementById("taskPresetSelect").addEventListener("change",function()
     document.getElementById("taskName").value = val;
   }
 })
-
 function toggleRepeatInput(){
   const mode=document.getElementById("repeatMode").value;
   const rangeRow=document.getElementById("repeatRangeRow");
@@ -419,25 +491,20 @@ function toggleRepeatInput(){
     singleRow.classList.remove("hidden-row");
   }
 }
-
 //切换视图：input / list / export
 function switchView(mode){
   const vInput=document.getElementById("viewInput");
   const vList=document.getElementById("viewList");
   const vExport=document.getElementById("viewExport");
-
   const tInput=document.getElementById("tabInput");
   const tList=document.getElementById("tabList");
   const tExport=document.getElementById("tabExport");
-
   vInput.classList.remove("show");
   vList.classList.remove("show");
   vExport.classList.remove("show");
-
   tInput.className="tab tab-inactive";
   tList.className="tab tab-inactive";
   tExport.className="tab tab-inactive";
-
   if(mode==="input"){
     vInput.classList.add("show");
     tInput.className="tab tab-active";
@@ -451,7 +518,6 @@ function switchView(mode){
     renderExchangePage();
   }
 }
-
 function toggleGroup(groupKey){
   const state=getCollapseState();
   state[groupKey]=!state[groupKey];
@@ -464,7 +530,6 @@ function toggleFinishedSection(){
   setUiState(ui);
   renderTasks();
 }
-
 // 保存任务，留在录入页面
 function addTask(){
   const subject=getFinalSubject();
@@ -472,9 +537,7 @@ function addTask(){
   const content = document.getElementById("taskContent").value.trim();
   const taskScore = Number(document.getElementById("taskScore").value)||0;
   const repeatMode=document.getElementById("repeatMode").value;
-
   if(!name){alert("请填写任务名称");return;}
-
   let task={
     id:Date.now(),
     subject:subject,
@@ -506,7 +569,6 @@ function addTask(){
   const list=getTaskList();
   list.push(task);
   saveTaskList(list);
-
   //清空表单，不切换页面
   document.getElementById("taskName").value="";
   document.getElementById("taskContent").value="";
@@ -519,13 +581,12 @@ function addTask(){
   alert("任务添加成功！");
 }
 
+//重写deleteTask
 function deleteTask(id){
-  const selDate = document.getElementById("selectDate").value;
   let list=getTaskList();
   const idx = list.findIndex(x=>x.id===id);
   const task = list[idx];
-
-  // 单次任务：直接删除整条
+  // 单次任务，沿用原来确认框
   if(task.repeatMode !== "daily"){
     if(!confirm("确定要删除这条单次任务吗？")) return;
     list=list.filter(item=>item.id!==id);
@@ -533,21 +594,9 @@ function deleteTask(id){
     renderTasks();
     return;
   }
-
-  // 每日重复任务，弹出二选一
-  const op = confirm("🔁这是每日重复任务！\n【确定】=仅跳过今天这一天（序列保留）\n【取消】=删除整个重复任务序列");
-  if(op){
-    //仅跳过当前选中的这一天
-    task.skipDaySet[selDate] = true;
-    saveTaskList(list);
-    renderTasks();
-  }else{
-    //删除整个序列
-    if(!confirm("⚠️确认彻底删除整个重复任务序列？所有日期都会消失！")) return;
-    list=list.filter(item=>item.id!==id);
-    saveTaskList(list);
-    renderTasks();
-  }
+  //重复任务唤起三按钮弹窗
+  modalCurrentTaskId = id;
+  document.getElementById("modalMask").classList.add("show");
 }
 
 function formatSec(sec){
@@ -578,7 +627,6 @@ function setTaskFinishedOnDate(task,selDate,flag){
     task.finished=flag;
   }
 }
-
 // ========= 修复后过期未完成扣分逻辑，全部字符串比较，无时区BUG =========
 function getDayList(startStr,endStr){
   const res=[];
@@ -593,7 +641,6 @@ function getDayList(startStr,endStr){
   }
   return res;
 }
-
 function checkDeductExpireScore(){
   let list = getTaskList();
   let changed = false;
@@ -620,7 +667,6 @@ function checkDeductExpireScore(){
   }
   if(changed) saveTaskList(list);
 }
-
 //下载文件
 function downloadFile(content,fileName,type="text/plain"){
   const blob=new Blob([content],{type:type});
@@ -631,7 +677,6 @@ function downloadFile(content,fileName,type="text/plain"){
   a.click();
   document.body.removeChild(a);
 }
-
 function exportTaskRange(){
   const expStart=document.getElementById("exportStartDate").value;
   const expEnd=document.getElementById("exportEndDate").value;
@@ -698,7 +743,6 @@ function exportTaskRange(){
   downloadFile(JSON.stringify(relatedTasks,null,2),`任务备份_${expStart}_${expEnd}.json`,"application/json");
   alert("导出完成！已下载成果报告txt + 原始备份json");
 }
-
 // ========= 全部数据导出导入 =========
 function exportAllData(){
   const fullData = {
@@ -712,7 +756,6 @@ function exportAllData(){
   };
   downloadFile(JSON.stringify(fullData,null,2),"全部任务完整备份.json","application/json");
 }
-
 function importAllData(fileList){
   const file = fileList[0];
   if(!file) return;
@@ -739,7 +782,6 @@ function importAllData(fileList){
   };
   reader.readAsText(file);
 }
-
 function renderTasks(){
   checkDeductExpireScore();
   const selDate=document.getElementById("selectDate").value;
@@ -754,7 +796,6 @@ function renderTasks(){
         return t.date===selDate;
       }
     });
-
   const dayPending=dayAllTasks.filter(t=>!isTaskFinishedOnDate(t,selDate));
   const dayFinished=dayAllTasks.filter(t=>isTaskFinishedOnDate(t,selDate));
   const wrap=document.getElementById("taskListWrap");
@@ -930,7 +971,6 @@ function checkStopRealTime(){
     realTimeTimer=null;
   }
 }
-
 // =========积分兑换相关=========
 function renderExchangePage(){
   const score = getScore();
@@ -951,7 +991,6 @@ function renderExchangePage(){
     wrap.innerHTML = html;
   }
 }
-
 function doExchange(){
   const inputVal = Number(document.getElementById("exchangeScoreInput").value);
   if(!inputVal || inputVal <=0){
@@ -969,7 +1008,6 @@ function doExchange(){
   }
   const money = inputVal / 100;
   if(!confirm(`确认兑换：${inputVal}积分 = ${money}元？`)) return;
-
   setScore(remain - inputVal);
   setTotalExchangedMoney(getTotalExchangedMoney() + money);
   const logArr = getExchangeLog();
@@ -983,7 +1021,6 @@ function doExchange(){
   alert("兑换成功！");
   renderExchangePage();
 }
-
 toggleRepeatInput();
 renderTasks();
 checkStopRealTime();
