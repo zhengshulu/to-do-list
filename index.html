@@ -348,6 +348,8 @@ function getTaskList(){
     if(t.taskScore===undefined) t.taskScore = 10;
     if(!t.content) t.content="";
     if(!t.deductFlag) t.deductFlag={}; //扣分标记，避免重复扣过期任务
+    if(!t.skipDaySet) t.skipDaySet={}; //重复任务被跳过/删掉的单日
+
   });
   return arr;
 }
@@ -518,12 +520,36 @@ function addTask(){
 }
 
 function deleteTask(id){
-  if(!confirm("确定要删除这条任务吗？")) return;
+  const selDate = document.getElementById("selectDate").value;
   let list=getTaskList();
-  list=list.filter(item=>item.id!==id);
-  saveTaskList(list);
-  renderTasks();
+  const idx = list.findIndex(x=>x.id===id);
+  const task = list[idx];
+
+  // 单次任务：直接删除整条
+  if(task.repeatMode !== "daily"){
+    if(!confirm("确定要删除这条单次任务吗？")) return;
+    list=list.filter(item=>item.id!==id);
+    saveTaskList(list);
+    renderTasks();
+    return;
+  }
+
+  // 每日重复任务，弹出二选一
+  const op = confirm("🔁这是每日重复任务！\n【确定】=仅跳过今天这一天（序列保留）\n【取消】=删除整个重复任务序列");
+  if(op){
+    //仅跳过当前选中的这一天
+    task.skipDaySet[selDate] = true;
+    saveTaskList(list);
+    renderTasks();
+  }else{
+    //删除整个序列
+    if(!confirm("⚠️确认彻底删除整个重复任务序列？所有日期都会消失！")) return;
+    list=list.filter(item=>item.id!==id);
+    saveTaskList(list);
+    renderTasks();
+  }
 }
+
 function formatSec(sec){
   let h=Math.floor(sec/3600);
   let m=Math.floor((sec%3600)/60);
@@ -722,12 +748,13 @@ function renderTasks(){
   const uiState=getUiState();
   document.getElementById("scoreText").innerText=getScore();
   const dayAllTasks=list.filter(t=>{
-    if(t.repeatMode==="daily"){
-      return isInRange(selDate,t.repeatStart,t.repeatEnd);
-    }else{
-      return t.date===selDate;
-    }
-  });
+      if(t.repeatMode==="daily"){
+        return isInRange(selDate,t.repeatStart,t.repeatEnd) && !t.skipDaySet[selDate];
+      }else{
+        return t.date===selDate;
+      }
+    });
+
   const dayPending=dayAllTasks.filter(t=>!isTaskFinishedOnDate(t,selDate));
   const dayFinished=dayAllTasks.filter(t=>isTaskFinishedOnDate(t,selDate));
   const wrap=document.getElementById("taskListWrap");
