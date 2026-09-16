@@ -115,6 +115,7 @@ button:active{
 .btn-success{background:#10b981;color:#fff;}
 .btn-danger{background:#b91c1c;color:#fff;}
 .btn-undo{background:#f59e0b;color:#fff;}
+.btn-edit{background:#7c3aed;color:#fff;}
 .btn-export{background:#8b5cf6;color:#fff;width:100%;margin-top:8px;padding:12px 18px;font-size:15px;}
 .btn-exchange{background:#ec4899;color:#fff;width:100%;margin-top:8px;padding:12px 18px;font-size:15px;}
 /* 任务卡片 */
@@ -162,8 +163,7 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
 }
 .subject-input-wrap select{flex:2;}
 .subject-input-wrap input{flex:1;}
-
-/*====自定义三按钮弹窗====*/
+/*====弹窗通用====*/
 .modal-mask{
   position:fixed;
   inset:0;
@@ -173,6 +173,7 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
   justify-content:center;
   z-index:9999;
   padding:16px;
+  overflow-y:auto;
 }
 .modal-mask.show{
   display:flex;
@@ -180,7 +181,7 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
 .modal-box{
   background:#fff;
   border-radius:16px;
-  max-width:340px;
+  max-width:420px;
   width:100%;
   padding:22px;
 }
@@ -194,6 +195,7 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
   display:flex;
   flex-direction:column;
   gap:10px;
+  margin-top:12px;
 }
 .modal-btn-group button{
   width:100%;
@@ -202,6 +204,7 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
   font-size:15px;
 }
 .btn-modal-day{background:#f59e0b;color:white;}
+.btn-modal-stopfuture{background:#10b981;color:white;}
 .btn-modal-all{background:#dc2626;color:white;}
 .btn-modal-cancel{background:#e2e8f0;color:#333;}
 </style>
@@ -351,15 +354,58 @@ cursor:pointer;border-radius:0 8px 8px 0;transition:all 0.22s ease;user-select:n
     </div>
   </div>
 </div>
-
-<!--自定义弹窗DOM 三按钮-->
+<!--重复任务弹窗 -->
 <div id="modalMask" class="modal-mask">
   <div class="modal-box">
-    <div class="modal-title">🔁每日重复任务</div>
+    <div class="modal-title">🔁每日重复任务操作</div>
     <div class="modal-btn-group">
       <button class="btn-modal-day" onclick="modalActionDay()">1、仅跳过当前选中这一天</button>
-      <button class="btn-modal-all" onclick="modalActionAll()">2、删除整个重复任务序列</button>
-      <button class="btn-modal-cancel" onclick="modalClose()">3、取消操作</button>
+      <button class="btn-modal-stopfuture" onclick="modalActionStopFuture()">2、终止后续重复序列（保留历史已完成）</button>
+      <button class="btn-modal-all" onclick="modalActionAll()">3、彻底删除整个重复任务序列（清除全部记录）</button>
+      <button class="btn-modal-cancel" onclick="modalClose()">4、取消操作</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====编辑任务弹窗===== -->
+<div id="editModalMask" class="modal-mask">
+  <div class="modal-box">
+    <div class="modal-title">✏️编辑任务</div>
+    <div class="item-row">
+      <label>任务名称</label>
+      <input id="editName" placeholder="任务名称">
+    </div>
+    <div class="item-row">
+      <label>任务备注</label>
+      <textarea id="editContent" placeholder="备注"></textarea>
+    </div>
+    <div class="item-row">
+      <label>任务积分</label>
+      <input id="editScore" type="number" min="0">
+    </div>
+    <div id="editSingleDateRow" class="item-row">
+      <label>计划执行日期</label>
+      <div class="date-wrap">
+        <input id="editTaskDate" type="date">
+      </div>
+    </div>
+    <div id="editRepeatRow" class="hidden-row">
+      <div class="item-row">
+        <label>周期开始</label>
+        <div class="date-wrap">
+          <input id="editRepeatStart" type="date">
+        </div>
+      </div>
+      <div class="item-row">
+        <label>周期结束</label>
+        <div class="date-wrap">
+          <input id="editRepeatEnd" type="date">
+        </div>
+      </div>
+    </div>
+    <div class="modal-btn-group">
+      <button class="btn-primary" onclick="saveEditTask()">💾保存修改</button>
+      <button class="btn-modal-cancel" onclick="closeEditModal()">❌取消</button>
     </div>
   </div>
 </div>
@@ -390,8 +436,11 @@ if(!localStorage.getItem("uiState")) localStorage.setItem("uiState",JSON.stringi
 if(!localStorage.getItem("exchangeLog")) localStorage.setItem("exchangeLog",JSON.stringify([]));
 if(!localStorage.getItem("totalExchangedMoney")) localStorage.setItem("totalExchangedMoney","0");
 
-//弹窗全局变量
+//全局变量
 let modalCurrentTaskId = null;
+let editCurrentTaskId = null;
+
+//========重复任务弹窗========
 function modalClose(){
   modalCurrentTaskId = null;
   document.getElementById("modalMask").classList.remove("show");
@@ -401,14 +450,38 @@ function modalActionDay(){
   const list = getTaskList();
   const idx = list.findIndex(x=>x.id === modalCurrentTaskId);
   const task = list[idx];
+  if(task.timing){
+    task.timing = false;
+    task.startTime = null;
+  }
   task.skipDaySet[selDate] = true;
   saveTaskList(list);
   modalClose();
   renderTasks();
   alert("已跳过当前日期任务");
 }
+//终止后续重复序列：修改repeatEnd为当前选中日期，保留历史全部记录，不删除任务对象
+function modalActionStopFuture(){
+  const selDate = document.getElementById("selectDate").value;
+  const list = getTaskList();
+  const idx = list.findIndex(x=>x.id === modalCurrentTaskId);
+  const task = list[idx];
+  if(!confirm(`确认终止后续重复？\n截止日期将设为${selDate}，之后不再生成该任务，历史完成记录全部保留。`)){
+    modalClose();
+    return;
+  }
+  if(task.timing){
+    task.timing = false;
+    task.startTime = null;
+  }
+  task.repeatEnd = selDate;
+  saveTaskList(list);
+  modalClose();
+  renderTasks();
+  alert("已终止后续重复序列，历史记录保留");
+}
 function modalActionAll(){
-  if(!confirm("⚠️确认彻底删除整个重复任务序列？所有记录将丢失！")){
+  if(!confirm("⚠️确认彻底删除整个重复任务序列？所有完成记录、计时记录全部丢失！")){
     modalClose();
     return;
   }
@@ -419,14 +492,82 @@ function modalActionAll(){
   renderTasks();
 }
 
+//========编辑弹窗相关========
+function openEditModal(taskId){
+  editCurrentTaskId = taskId;
+  const list = getTaskList();
+  const t = list.find(x=>x.id === taskId);
+  if(!t) return;
+
+  document.getElementById("editName").value = t.name||"";
+  document.getElementById("editContent").value = t.content||"";
+  document.getElementById("editScore").value = t.taskScore||0;
+
+  if(t.repeatMode === "daily"){
+    document.getElementById("editSingleDateRow").classList.add("hidden-row");
+    document.getElementById("editRepeatRow").classList.remove("hidden-row");
+    document.getElementById("editRepeatStart").value = t.repeatStart;
+    document.getElementById("editRepeatEnd").value = t.repeatEnd;
+  }else{
+    document.getElementById("editSingleDateRow").classList.remove("hidden-row");
+    document.getElementById("editRepeatRow").classList.add("hidden-row");
+    document.getElementById("editTaskDate").value = t.date;
+  }
+  document.getElementById("editModalMask").classList.add("show");
+}
+function closeEditModal(){
+  editCurrentTaskId = null;
+  document.getElementById("editModalMask").classList.remove("show");
+}
+function saveEditTask(){
+  const list = getTaskList();
+  const idx = list.findIndex(x=>x.id === editCurrentTaskId);
+  const t = list[idx];
+  if(!t) return;
+
+  const newName = document.getElementById("editName").value.trim();
+  const newContent = document.getElementById("editContent").value.trim();
+  const newScore = Number(document.getElementById("editScore").value)||0;
+  if(!newName){
+    alert("任务名称不能为空");
+    return;
+  }
+  t.name = newName;
+  t.content = newContent;
+  t.taskScore = newScore;
+
+  if(t.repeatMode === "daily"){
+    const rs = document.getElementById("editRepeatStart").value;
+    const re = document.getElementById("editRepeatEnd").value;
+    if(!rs || !re){
+      alert("周期起止日期不能为空");
+      return;
+    }
+    t.repeatStart = rs;
+    t.repeatEnd = re;
+  }else{
+    const dt = document.getElementById("editTaskDate").value;
+    if(!dt){
+      alert("计划执行日期不能为空");
+      return;
+    }
+    t.date = dt;
+  }
+  saveTaskList(list);
+  closeEditModal();
+  renderTasks();
+}
+
 function getTaskList(){
   const arr=JSON.parse(localStorage.getItem("taskList"));
   arr.forEach(t=>{
     if(!t.dateFinishedMap) t.dateFinishedMap={};
     if(t.taskScore===undefined) t.taskScore = 10;
     if(!t.content) t.content="";
-    if(!t.deductFlag) t.deductFlag={}; //扣分标记，避免重复扣过期任务
-    if(!t.skipDaySet) t.skipDaySet={}; //重复任务被跳过/删掉的单日
+    if(!t.deductFlag) t.deductFlag={};
+    if(!t.skipDaySet) t.skipDaySet={};
+    if(!t.dayTimeMap) t.dayTimeMap = {};
+    if(t.totalTime === undefined) t.totalTime = 0;
   });
   return arr;
 }
@@ -445,13 +586,16 @@ function getExchangeLog(){return JSON.parse(localStorage.getItem("exchangeLog"))
 function saveExchangeLog(arr){localStorage.setItem("exchangeLog",JSON.stringify(arr));}
 function getTotalExchangedMoney(){return Number(localStorage.getItem("totalExchangedMoney"));}
 function setTotalExchangedMoney(v){localStorage.setItem("totalExchangedMoney",String(v));}
+
 document.getElementById("taskDate").value=today;
 document.getElementById("repeatStart").value=today;
 document.getElementById("repeatEnd").value=today;
 document.getElementById("selectDate").value=today;
 document.getElementById("exportStartDate").value=today;
 document.getElementById("exportEndDate").value=today;
+
 let realTimeTimer=null;
+
 // 获取最终学科（下拉优先，自定义输入不为空就取自定义）
 function getFinalSubject(){
   let selVal = document.getElementById("taskSubjectSelect").value.trim();
@@ -547,7 +691,9 @@ function addTask(){
     repeatMode:repeatMode,
     finished:false,
     dateFinishedMap:{},
+    dayTimeMap:{},
     deductFlag:{},
+    skipDaySet:{},
     timing:false,
     totalTime:0,
     startTime:null
@@ -580,7 +726,6 @@ function addTask(){
   toggleRepeatInput();
   alert("任务添加成功！");
 }
-
 //重写deleteTask
 function deleteTask(id){
   let list=getTaskList();
@@ -598,17 +743,26 @@ function deleteTask(id){
   modalCurrentTaskId = id;
   document.getElementById("modalMask").classList.add("show");
 }
-
 function formatSec(sec){
+  sec = sec||0;
   let h=Math.floor(sec/3600);
   let m=Math.floor((sec%3600)/60);
   let s=sec%60;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
-function getDisplayTime(task){
-  if(!task.timing) return task.totalTime;
+//获取当日耗时，区分单次/每日重复
+function getTaskDaySeconds(task, selDate){
+  if(task.repeatMode === "daily"){
+    return Number(task.dayTimeMap[selDate]||0);
+  }else{
+    return Number(task.totalTime||0);
+  }
+}
+function getDisplayTime(task, selDate){
+  const base = getTaskDaySeconds(task, selDate);
+  if(!task.timing) return base;
   const diff=Math.round((Date.now()-task.startTime)/1000);
-  return task.totalTime + diff;
+  return base + diff;
 }
 function isInRange(checkDate,start,end){
   return checkDate >= start && checkDate <= end;
@@ -702,16 +856,22 @@ function exportTaskRange(){
   let totalSecond=0;
   const subjectStat={};
   relatedTasks.forEach(t=>{
-    totalSecond+=t.totalTime;
     const subj=t.subject||"其他";
     if(!subjectStat[subj]) subjectStat[subj]={count:0,finished:0,sec:0};
     subjectStat[subj].count+=1;
-    subjectStat[subj].sec+=t.totalTime;
     if(t.repeatMode==="daily"){
+      Object.keys(t.dayTimeMap).forEach(d=>{
+        if(d>=expStart&&d<=expEnd){
+          totalSecond += Number(t.dayTimeMap[d]||0);
+          subjectStat[subj].sec += Number(t.dayTimeMap[d]||0);
+        }
+      });
       Object.keys(t.dateFinishedMap).forEach(d=>{
         if(d>=expStart&&d<=expEnd&&t.dateFinishedMap[d]) finishedCount++;
       });
     }else{
+      totalSecond += Number(t.totalTime||0);
+      subjectStat[subj].sec += Number(t.totalTime||0);
       if(t.finished) finishedCount++;
     }
   });
@@ -736,7 +896,13 @@ function exportTaskRange(){
     }else{
       txtReport+=`类型：单次，计划日期：${t.date}，状态：${t.finished?"✅已完成":"⏳未完成"}\n`;
     }
-    txtReport+=`  累计耗时：${formatSec(t.totalTime)}\n`;
+    let sumSec;
+    if(t.repeatMode==="daily"){
+      sumSec = Object.values(t.dayTimeMap).reduce((s,v)=> s + Number(v||0),0);
+    }else{
+      sumSec = Number(t.totalTime||0);
+    }
+    txtReport+=`  累计耗时：${formatSec(sumSec)}\n`;
   });
   txtReport+="\n====================================\n报告导出时间："+today+"\n";
   downloadFile(txtReport,`任务成果_${expStart}_${expEnd}.txt`,"text/plain");
@@ -782,6 +948,7 @@ function importAllData(fileList){
   };
   reader.readAsText(file);
 }
+
 function renderTasks(){
   checkDeductExpireScore();
   const selDate=document.getElementById("selectDate").value;
@@ -796,6 +963,15 @@ function renderTasks(){
         return t.date===selDate;
       }
     });
+  //防护：已完成任务强制关闭计时，修复跨天计时残留
+  dayAllTasks.forEach(t=>{
+    if(isTaskFinishedOnDate(t, selDate)){
+      if(t.timing){
+        t.timing = false;
+        t.startTime = null;
+      }
+    }
+  });
   const dayPending=dayAllTasks.filter(t=>!isTaskFinishedOnDate(t,selDate));
   const dayFinished=dayAllTasks.filter(t=>isTaskFinishedOnDate(t,selDate));
   const wrap=document.getElementById("taskListWrap");
@@ -825,11 +1001,12 @@ function renderTasks(){
         html+=`<div class="task-card">
           <div class="task-name">${t.name} ${repeatTag} ${scoreTag}</div>
           ${contentHtml}
-          <div class="time-text">累计耗时：${formatSec(getDisplayTime(t))}</div>
+          <div class="time-text">累计耗时：${formatSec(getDisplayTime(t, selDate))}</div>
           <div class="btn-wrap">
             ${(!t.timing)?`<button class="btn-primary" onclick="startTimer(${t.id})">开始</button>`:""}
             ${t.timing?`<button class="btn-warn" onclick="stopTimer(${t.id})">结束</button>`:""}
             <button class="btn-success" onclick="finishTask(${t.id})">完成(+${t.taskScore}分)</button>
+            <button class="btn-edit" onclick="openEditModal(${t.id})">✏️编辑</button>
             <button class="btn-danger" onclick="deleteTask(${t.id})">删除</button>
           </div>
         </div>`;
@@ -858,9 +1035,10 @@ function renderTasks(){
       html+=`<div class="task-card">
         <div class="task-name">${t.name}<span class="tag-finish">已完成</span> ${repeatTag} ${scoreTag}</div>
         ${contentHtml}
-        <div class="time-text">累计耗时：${formatSec(t.totalTime)}</div>
+        <div class="time-text">累计耗时：${formatSec(getDisplayTime(t, selDate))}</div>
         <div class="btn-wrap">
           <button class="btn-undo" onclick="undoFinishTask(${t.id})">撤销完成</button>
+          <button class="btn-edit" onclick="openEditModal(${t.id})">✏️编辑</button>
           <button class="btn-danger" onclick="deleteTask(${t.id})">删除</button>
         </div>
       </div>`;
@@ -884,12 +1062,13 @@ function renderExpire(){
     html+=`<div class="task-card">
       <div class="task-name">${t.name}<span class="tag-expire">已过期(${t.date})</span> ${scoreTag}</div>
       ${contentHtml}
-      <div class="time-text">累计耗时：${formatSec(getDisplayTime(t))}</div>
+      <div class="time-text">累计耗时：${formatSec(getDisplayTime(t, t.date))}</div>
       <div class="btn-wrap">
         <button class="btn-gray" onclick="moveToToday(${t.id})">移到今日继续</button>
         ${(!t.timing)?`<button class="btn-primary" onclick="startTimer(${t.id})">开始</button>`:""}
         ${t.timing?`<button class="btn-warn" onclick="stopTimer(${t.id})">结束</button>`:""}
         <button class="btn-success" onclick="finishTask(${t.id})">完成(+${t.taskScore}分)</button>
+        <button class="btn-edit" onclick="openEditModal(${t.id})">✏️编辑</button>
         <button class="btn-danger" onclick="deleteTask(${t.id})">删除</button>
       </div>
     </div>`;
@@ -904,21 +1083,30 @@ function moveToToday(id){
   renderTasks();
 }
 function startTimer(id){
+  const selDate = document.getElementById("selectDate").value;
   const list=getTaskList();
   const idx=list.findIndex(x=>x.id===id);
-  list[idx].timing=true;
-  list[idx].startTime=Date.now();
+  const t = list[idx];
+  t.timing=true;
+  t.startTime=Date.now();
   saveTaskList(list);
   renderTasks();
   startRealTimeRefresh();
 }
 function stopTimer(id){
+  const selDate = document.getElementById("selectDate").value;
   const list=getTaskList();
   const idx=list.findIndex(x=>x.id===id);
-  const cost=Math.round((Date.now()-list[idx].startTime)/1000);
-  list[idx].totalTime+=cost;
-  list[idx].timing=false;
-  list[idx].startTime=null;
+  const t = list[idx];
+  const cost=Math.round((Date.now()-t.startTime)/1000);
+  if(t.repeatMode === "daily"){
+    const old = Number(t.dayTimeMap[selDate]||0);
+    t.dayTimeMap[selDate] = old + cost;
+  }else{
+    t.totalTime+=cost;
+  }
+  t.timing=false;
+  t.startTime=null;
   saveTaskList(list);
   renderTasks();
   checkStopRealTime();
@@ -931,7 +1119,12 @@ function finishTask(id){
   if(isTaskFinishedOnDate(task,selDate)) return;
   if(task.timing){
     const cost=Math.round((Date.now()-task.startTime)/1000);
-    task.totalTime+=cost;
+    if(task.repeatMode === "daily"){
+      const old = Number(task.dayTimeMap[selDate]||0);
+      task.dayTimeMap[selDate] = old + cost;
+    }else{
+      task.totalTime+=cost;
+    }
     task.timing=false;
     task.startTime=null;
   }
@@ -1027,3 +1220,4 @@ checkStopRealTime();
 </script>
 </body>
 </html>
+
